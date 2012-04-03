@@ -1,18 +1,25 @@
 #!/usr/local/bin/node
 
 var net = require('net');
+var serialPort = require('serialport').SerialPort;
 
 
 var configuration = {
-	tcpPort       : 1339,
-	width         : 24,
-	height        : 24,
-	bpc           : 8,
-	channels      : 3,
-	name          : 'PentawallHD',
-	recordingPath : '~/wallRecords'
+	tcpPort            : 1339,
+	width              : 24,
+	height             : 24,
+	bpp                : 8,
+	subpixel           : 3,
+	subpixelOrder      : 'rrggbb',
+	ceilingLed 		   : true,
+	name               : 'PentawallHD',
+	recordingPath      : '~/wallRecords',
+	serialDevice       : '/dev/....',
+	serialSpeed        : 500000,
+	runWithoutHardware : true
 };
 
+//var ledWallConnection = new serialPort(configuration.serialDevice, {baudrate: configuration.serialSpeed});
 
 //request.socket.removeAllListeners('timeout'); 
 
@@ -20,29 +27,32 @@ var configuration = {
 var openConnections = {};
 
 
-function processPacket(data)
+function processPacket(data,connectionId)
 {
 	switch(data.substr(0,2))
 	{
 		case '00':
-			return 'help:i\r\n'+
-			'00 help\r\n'+
-			'01 show configuration\r\n'+
-			'02xxyyrrggbb set Pixel\r\n'+
-			'   * xxyy == FFFF set all pixel\r\n'+
-			'   * xx   == F0..F4 set ceilingLed, yy == whiteChannel\r\n'+
-			'03rrggbb..rrggbb set all 576 pixel\r\n'+
-			'04ll set priority level 00..04';
-			break;
+			return 'help:\r\n\r\n'+
+			'00 help\r\n\r\n'+
+			'01 show configuration\r\n\r\n'+
+			'02xxyy'+configuration.subpixelOrder+' set Pixel\r\n'+
+			'   * xxyy == FFFF : set all pixel\r\n\r\n'+
+			((configuration.ceilingLed==true) ? '02xxrrggbbww set CeilingLED \r\n   * xx   == F0..F3 ; FE (all) \r\n\r\n':'')+
+			'03'+configuration.subpixelOrder+'..'+configuration.subpixelOrder+' set all '+(configuration.width*configuration.height)+' pixel\r\n\r\n'+
+			'04ll set priority level 00..04 , currentLevel: '+openConnections[connectionId].priorityLevel+'\r\n';
+
 		case '01':
 			return 'width='+configuration.width+
 					'\r\nheight='+configuration.height+
-					'\r\nchannels='+configuration.channels+
-					'\r\nbitsPerChannel='+configuration.bpc+
-					'\r\nname='+configuration.name;
+					'\r\nsubpixel='+configuration.subpixel+
+					'\r\nbpp='+configuration.bpp+
+					'\r\nname='+configuration.name+
+					'\r\nsubpixelOrder='+configuration.subpixelOrder+
+					'\r\nceilingLed='+configuration.ceilingLed;
+		case '04':
+			
 		default:
 			return 'bad';
-			break;
 	}
 }
 
@@ -55,7 +65,7 @@ var server = net.createServer(function (socket) {
 
 
 	openConnections[++connectionId] = {
-								priorityLevel               : 1, 
+								priorityLevel               : 2, 
 								lastActivity                : Date.now(), 
 								readBuffer                  : '',
 								messageChannelSubscriptions : {},
@@ -79,7 +89,7 @@ var server = net.createServer(function (socket) {
 			var dataToProcess = completeData.substr(0,pos);
 			completeData = completeData.substr(pos+3,completeData.length);
 
-			socket.write(processPacket(dataToProcess)+'\r\n');
+			socket.write(processPacket(dataToProcess,connectionId)+'\r\n');
 		}
 		openConnections[connectionId].readBuffer=completeData;
 
