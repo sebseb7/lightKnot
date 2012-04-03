@@ -1,8 +1,9 @@
 #!/usr/local/bin/node
 
 var net = require('net');
-var serialPort = require('serialport').SerialPort;
+var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
 
+var nnl = '\r\n'; //network new line
 var configuration;
 var wallType = process.argv[2];
 
@@ -69,23 +70,23 @@ function processPacket(data,connectionId)
 	switch(data.substr(0,2))
 	{
 		case '00':
-			return 'help:\r\n\r\n'+
-			'00 help\r\n\r\n'+
-			'01 show configuration\r\n\r\n'+
-			'02xxyy'+configuration.subpixelOrder+' set Pixel\r\n'+
-			'   * xxyy == FFFF : set all pixel\r\n\r\n'+
-			((configuration.ceilingLed==true) ? '02xxrrggbbww set CeilingLED \r\n   * xx   == F0..F3 ; FE (all) \r\n\r\n':'')+
-			'03'+configuration.subpixelOrder+'..'+configuration.subpixelOrder+' set all '+(configuration.width*configuration.height)+' pixel\r\n\r\n'+
-			'04ll set priority level 00..04 , currentLevel: '+openConnections[connectionId].priorityLevel+'\r\n';
+			return 'help:'+nnl+nnl+
+			'00 help'+nnl+nnl+
+			'01 show configuration'+nnl+nnl+
+			'02xxyy'+configuration.subpixelOrder+' set Pixel'+nnl+
+			'   * xxyy == FFFF : set all pixel'+nnl+nnl+
+			((configuration.ceilingLed==true) ? '02xxrrggbbww set CeilingLED '+nnl+'   * xx   == F0..F3 ; FE (all) '+nnl+nnl:'')+
+			'03'+configuration.subpixelOrder+'..'+configuration.subpixelOrder+' set all '+(configuration.width*configuration.height)+' pixel'+nnl+nnl+
+			'04ll set priority level 00..04 , currentLevel: '+openConnections[connectionId].priorityLevel+nnl;
 
 		case '01':
-			return 'width='+configuration.width+
-					'\r\nheight='+configuration.height+
-					'\r\nsubpixel='+configuration.subpixel+
-					'\r\nbpp='+configuration.bpp+
-					'\r\nname='+configuration.name+
-					'\r\nsubpixelOrder='+configuration.subpixelOrder+
-					'\r\nceilingLed='+configuration.ceilingLed;
+			return  'width='+configuration.width+nnl+
+					'height='+configuration.height+nnl+
+					'subpixel='+configuration.subpixel+nnl+
+					'bpp='+configuration.bpp+nnl+
+					'name='+configuration.name+nnl+
+					'subpixelOrder='+configuration.subpixelOrder+nnl+
+					'ceilingLed='+configuration.ceilingLed;
 		case '04':
 			
 		default:
@@ -97,7 +98,7 @@ function processPacket(data,connectionId)
 var connectionId = 0;
 var server = net.createServer(function (socket) {
 	socket.setNoDelay(true);
-	socket.write('welcome (00+<enter> for help)\r\n');
+	socket.write('welcome (00+<enter> for help)'+nnl);
 	console.log('new connection');
 
 
@@ -112,7 +113,7 @@ var server = net.createServer(function (socket) {
 	console.log(openConnections);
 
 	socket.setTimeout(5*60*1000, function () {
-		socket.write('timeout\r\n');
+		socket.write('timeout'+nnl);
 		socket.end();
 	});
 
@@ -121,12 +122,12 @@ var server = net.createServer(function (socket) {
 		var completeData = openConnections[connectionId].readBuffer + data.toString('ascii');
 
 		var pos;
-		while( (pos=completeData.indexOf('\r\n')) != -1)
+		while( (pos=completeData.indexOf(nnl)) != -1)
 		{
 			var dataToProcess = completeData.substr(0,pos);
 			completeData = completeData.substr(pos+3,completeData.length);
 
-			socket.write(processPacket(dataToProcess,connectionId)+'\r\n');
+			socket.write(processPacket(dataToProcess,connectionId)+nnl);
 		}
 		openConnections[connectionId].readBuffer=completeData;
 
