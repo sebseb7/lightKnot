@@ -3,26 +3,63 @@
 var net = require('net');
 var serialPort = require('serialport').SerialPort;
 
+var configuration;
+var wallType = process.argv[2];
 
-var configuration = {
-	tcpPort            : 1339,
-	width              : 24,
-	height             : 24,
-	bpp                : 8,
-	subpixel           : 3,
-	subpixelOrder      : 'rrggbb',
-	ceilingLed 		   : true,
-	name               : 'PentawallHD',
-	recordingPath      : '~/wallRecords',
-	serialDevice       : '/dev/....',
-	serialSpeed        : 500000,
-	runWithoutHardware : true
-};
+if(wallType == 'g3d2') {
 
+	configuration = {
+		tcpPort            : 1339,
+		width              : 72,
+		height             : 32,
+		bpp                : 4,
+		subpixel           : 1,
+		subpixelOrder      : 'g',
+		ceilingLed 		   : false,
+		name               : 'g3d2',
+		recordingPath      : '~/wallRecords_g3d2',
+		serialDevice       : '/dev/....',
+		serialSpeed        : 500000
+	};
+
+}else if(wallType == 'pentawall') {
+
+	configuration = {
+		tcpPort            : 1338,
+		width              : 16,
+		height             : 15,
+		bpp                : 8,
+		subpixel           : 3,
+		subpixelOrder      : 'rrggbb',
+		ceilingLed 		   : false,
+		name               : 'Pentawall',
+		recordingPath      : '~/wallRecords_pw',
+		serialDevice       : '/dev/....',
+		serialSpeed        : 500000
+	};
+
+}else{
+
+	configuration = {
+		tcpPort            : 1340,
+		width              : 24,
+		height             : 24,
+		bpp                : 8,
+		subpixel           : 3,
+		subpixelOrder      : 'rrggbb',
+		ceilingLed 		   : true,
+		name               : 'PentawallHD',
+		recordingPath      : '~/wallRecords_pwhd',
+		serialDevice       : '/dev/....',
+		serialSpeed        : 500000
+	};
+
+}
 //var ledWallConnection = new serialPort(configuration.serialDevice, {baudrate: configuration.serialSpeed});
 
 //request.socket.removeAllListeners('timeout'); 
 
+console.log('Starting Server for '+configuration.name+' on port '+configuration.tcpPort);
 
 var openConnections = {};
 
@@ -83,9 +120,9 @@ var server = net.createServer(function (socket) {
 
 		var completeData = openConnections[connectionId].readBuffer + data.toString('ascii');
 
-		while(completeData.indexOf('\r\n') != -1)
+		var pos;
+		while( (pos=completeData.indexOf('\r\n')) != -1)
 		{
-			var pos = completeData.indexOf('\r\n');
 			var dataToProcess = completeData.substr(0,pos);
 			completeData = completeData.substr(pos+3,completeData.length);
 
