@@ -57,8 +57,10 @@ exports.setAllPixel = function(r,g,b) {
 
 	var buf = new Buffer([0,0,r,g,b]);
 
-	ledWallConnection.write(magic_42);
-	ledWallConnection.write(escapeData(buf));
+	if(ledWallConnection){
+		ledWallConnection.write(magic_42);
+		ledWallConnection.write(escapeData(buf));
+	}
 
 }
 
@@ -67,24 +69,30 @@ exports.setPixel = function(x,y,r,g,b) {
 
 	var buf = new Buffer([x+1,y+1,r,g,b]);
 
-	ledWallConnection.write(magic_42);
-	ledWallConnection.write(escapeData(buf));
+	if(ledWallConnection){
+		ledWallConnection.write(magic_42);
+		ledWallConnection.write(escapeData(buf));
+	}
 
 }
 exports.setCeiling = function(x,r,g,b,w) {
 
 	var buf = new Buffer([x,r,g,b,w]);
 
-	ledWallConnection.write(magic_42);
-	ledWallConnection.write(escapeData(buf));
+	if(ledWallConnection){
+		ledWallConnection.write(magic_42);
+		ledWallConnection.write(escapeData(buf));
+	}
 
 }
 
 
 exports.setFrame = function(buf) {
 
-	ledWallConnection.write(magic_23);
-	ledWallConnection.write(escapeData(buf));
+	if(ledWallConnection){
+		ledWallConnection.write(magic_23);
+		ledWallConnection.write(escapeData(buf));
+	}
 
 }
 

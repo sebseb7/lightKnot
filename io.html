@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<title>Pentawall Live Image</title>
+
+		<script src="http://localhost:2340/socket.io/socket.io.js"></script>
+
+		<script>
+
+			function onLoad(){
+
+				var socket = io.connect('http://localhost:2340');
+				var canvas = document.getElementById("canvas1");
+				canvas = canvas.getContext("2d");
+				socket.on('frame', function (data) {
+					
+					var buf = data;
+
+					socket.emit('ack');
+
+					var i = 0;
+					for(i = 0; i < 24 ;i++)
+					{
+						var j=0;
+						for(j = 0; j < 24 ;j++)
+						{
+							
+							var r = buf.charCodeAt(((23-i)*24+(23-j))*3);
+							var g = buf.charCodeAt(((23-i)*24+(23-j))*3+1);
+							var b = buf.charCodeAt(((23-i)*24+(23-j))*3+2);
+
+							canvas.fillStyle = "rgb("+r+","+g+","+b+")";
+							canvas.fillRect( j*10, (23-i)*10, 10, 10 );
+				
+						}
+					}
+				});
+			}
+		</script>
+
+	</head>
+
+	<body style="background-color:black" onload="onLoad()">
+
+
+		<!--<div id="back" style="background-image: url(bg/bg_444.jpg);width:900px;height:596px;position:absolute;top:0px;left:0px">-->
+		<div id="back" style="width:900px;height:596px;position:absolute;top:0px;left:0px">
+			<canvas id="canvas1" width="240" height="240" style="margin-left:250px;padding-top:260px"></canvas>
+		</div>
+	</body>
+</html>
+
+

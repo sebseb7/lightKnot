@@ -94,11 +94,13 @@ function updateCurrentPrio(){
 
 	currentPrio = 0;
 
-	for(var connectionId in openConnections){
-		if(openConnections[connectionId].priorityLevel > currentPrio){
-			currentPrio = openConnections[connectionId].priorityLevel;
+	for(var connId in openConnections){
+		if(openConnections[connId].priorityLevel > currentPrio){
+			currentPrio = openConnections[connId].priorityLevel;
 		}
 	}
+
+	console.log(currentPrio);
 
 }
 
@@ -187,6 +189,8 @@ function processPacket(data,connectionId)
 
 			displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 
+
+
 			if(openConnections[connectionId].priorityLevel >= currentPrio){
 				wall.setFrame(buf);
 			}
@@ -223,13 +227,14 @@ function processPacket(data,connectionId)
 }
 
 
-var connectionId = 0;
+var connectionIdCtr = 0;
 var server = net.createServer(function (socket) {
 	socket.setNoDelay(true);
 	socket.write('welcome (00+<enter> for help)'+nnl);
 
+	var connectionId = connectionIdCtr++;
 
-	openConnections[++connectionId] = {
+	openConnections[connectionId] = {
 								priorityLevel               : 2, 
 								lastActivity                : Date.now(), 
 								readBuffer                  : '',
@@ -288,4 +293,56 @@ server.on('connection', function (e) {
 
 server.listen(configuration.tcpPort, '::1');
 
+var ioSockets = {};
+var ioSocketIdCtr = 0;
+var io = require('socket.io').listen(configuration.tcpPort+1000);
+io.set('log level', 1); 
+
+io.sockets.on('connection', function (socket) {
+
+	var  ioSocketId = ioSocketIdCtr++;
+
+	ioSockets[ioSocketId] = {
+		ioWindow : 0,
+		ioSocket : socket
+	}
+
+
+	socket.on('ack', function () {
+		if(ioSockets[ioSocketId]){
+			ioSockets[ioSocketId].ioWindow--;
+		};
+	});
+	socket.on('disconnect', function () {
+		delete ioSockets[ioSocketId];
+	});
+
+});
+
+
+var lastFrame;
+
+var pushFrames = function() {
+
+	if(lastFrame != displayBuffers[currentPrio]){
+		var frame = '';
+		for(var sockId in ioSockets){
+
+			if(ioSockets[sockId].ioWindow < 5){
+
+				if(frame == ''){
+					frame = displayBuffers[0].toString('binary');
+				}
+
+				ioSockets[sockId].ioWindow++;
+				ioSockets[sockId].ioSocket.emit('frame',frame);
+			}
+		}
+		lastFrame = displayBuffers[currentPrio];
+	}
+
+};
+
+
+setInterval(pushFrames,50);
 
