@@ -159,7 +159,7 @@ function processPacket(data,connectionId)
 				
 			var targetPrio = parseInt(data.substr(2,2),16);
 
-			if(isNaN(targetPrio) || (targetPrio > 3))
+			if(isNaN(targetPrio) || (targetPrio > 4))
 			{
 				return 'bad';
 			}

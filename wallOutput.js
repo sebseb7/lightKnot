@@ -15,6 +15,7 @@ exports.init = function(noHardware,device,baudrate) {
 }
 
 
+
 var escapeData = function(input) {
 
 	var output = new Buffer(2*input.length);
@@ -62,6 +63,9 @@ exports.setAllPixel = function(r,g,b) {
 
 }
 
+var magic_42 = new Buffer([0x42]);
+var magic_23 = new Buffer([0x23]);
+
 exports.setPixel = function(x,y,r,g,b) {
 
 	var buf = new Buffer(5);
@@ -72,7 +76,7 @@ exports.setPixel = function(x,y,r,g,b) {
 	buf[3] = g;
 	buf[4] = b;
 
-	ledWallConnection.write(new Buffer([0x42]));
+	ledWallConnection.write(magic_42);
 	ledWallConnection.write(escapeData(buf));
 
 }
@@ -80,10 +84,8 @@ exports.setPixel = function(x,y,r,g,b) {
 
 exports.setFrame = function(buf) {
 
-
-	ledWallConnection.write(new Buffer([0x23]));
+	ledWallConnection.write(magic_23);
 	ledWallConnection.write(escapeData(buf));
 
-	return true;
 }
 
