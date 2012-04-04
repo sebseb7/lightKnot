@@ -64,7 +64,7 @@ if(wallType == 'g3d2') {
 
 //request.socket.removeAllListeners('timeout'); 
 
-wall.init(true,configuration.serialDevice,configuration.serialSpeed);
+wall.init(false,configuration.serialDevice,configuration.serialSpeed);
 
 console.log('Starting Server for '+configuration.name+' on port '+configuration.tcpPort);
 
@@ -78,6 +78,9 @@ var currentPrio = 0;
 
 for(var i = 0;i < 4; i++)
 {
+
+	// buffer ! not a string
+
 	var levelBuffer ='';
 
 	for(var j = 0;j < frameSize;j++)
@@ -92,15 +95,20 @@ for(var i = 0;i < 4; i++)
 
 function updateCurrentPrio(){
 
-	currentPrio = 0;
+	var newPrio = 0;
 
 	for(var connId in openConnections){
 		if(openConnections[connId].priorityLevel > currentPrio){
-			currentPrio = openConnections[connId].priorityLevel;
+			newPrio = openConnections[connId].priorityLevel;
 		}
 	}
 
-	console.log(currentPrio);
+	if(currentPrio != newPrio)
+	{
+		currentPrio = newPrio;
+		wall.setFrame(displayBuffers[currentPrio]);
+	}
+
 
 }
 
@@ -146,6 +154,16 @@ function processPacket(data,connectionId)
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setAllPixel(r,g,b);
 				}
+			
+
+				// buffer not a string !
+				var newBuffer ='';
+
+				for(var j = 0;j < (configuration.width*configuration.height);j++)
+				{
+					//newBuffer+=rgb;
+				}
+				displayBuffers[openConnections[connectionId].priorityLevel] = newBuffer;
 
 			}else if ((x < 24)&&(y < 24)){
 	
@@ -153,6 +171,8 @@ function processPacket(data,connectionId)
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setPixel(x,y,r,g,b);
 				}
+
+				//SET THE CURRENT BUFFER
 			
 			}else if ((x <= 0xf4)&&(x >= 0xf0)){
 	
@@ -241,6 +261,7 @@ var server = net.createServer(function (socket) {
 								messageChannelSubscriptions : {},
 								connectionSocket            : socket
 							} 
+	updateCurrentPrio();
 	console.log('new connection '+connectionId);
 
 	//console.log(openConnections);
@@ -275,6 +296,7 @@ var server = net.createServer(function (socket) {
 		//cleanup
 		console.log('connection '+connectionId+' closed');
 		delete openConnections[connectionId];
+		updateCurrentPrio();
 	});
 
 });
@@ -331,7 +353,7 @@ var pushFrames = function() {
 			if(ioSockets[sockId].ioWindow < 5){
 
 				if(frame == ''){
-					frame = displayBuffers[0].toString('binary');
+					frame = displayBuffers[currentPrio].toString('binary');
 				}
 
 				ioSockets[sockId].ioWindow++;
