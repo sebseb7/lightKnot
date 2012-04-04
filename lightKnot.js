@@ -112,7 +112,7 @@ function processPacket(data,connectionId)
 			'01 show configuration'+nnl+nnl+
 			'02xxyy'+configuration.subpixelOrder+' set Pixel'+nnl+
 			'   * xxyy == FFFF : set all pixel'+nnl+nnl+
-			((configuration.ceilingLed==true) ? '02xxrrggbbww set CeilingLED '+nnl+'   * xx   == F0..F3 ; FE (all) '+nnl+nnl:'')+
+			((configuration.ceilingLed==true) ? '02xxrrggbbww set CeilingLED '+nnl+'   * xx   == F1..F4 ; F0 (all) '+nnl+nnl:'')+
 			'03'+configuration.subpixelOrder+'..'+configuration.subpixelOrder+' set all '+(configuration.width*configuration.height)+' pixel'+nnl+nnl+
 			'04ll set priority level 00..04 , currentLevel: '+openConnections[connectionId].priorityLevel+nnl;
 
@@ -141,15 +141,22 @@ function processPacket(data,connectionId)
 				
 				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 	
-				if(openConections[connectionId].priorityLevel >= currentPrio){
+				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setAllPixel(r,g,b);
 				}
 
 			}else if ((x < 24)&&(y < 24)){
 	
 				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
-				if(openConections[connectionId].priorityLevel >= currentPrio){
+				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setPixel(x,y,r,g,b);
+				}
+			
+			}else if ((x <= 0xf4)&&(x >= 0xf0)){
+	
+				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
+				if(openConnections[connectionId].priorityLevel >= currentPrio){
+					wall.setCeiling(x,y,r,g,b);
 				}
 			
 			}else{
