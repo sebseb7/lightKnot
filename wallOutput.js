@@ -3,9 +3,9 @@ var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
 
 var ledWallConnection;
 
-exports.init = function(noHardware,device,baudrate) {
+exports.init = function(realHardwareAvailable,device,baudrate) {
 
-	if(! noHardware)
+	if(realHardwareAvailable)
 	{
 		console.log('initialize serial connection');	
 		ledWallConnection = new serialPort(device, {baudrate: baudrate});

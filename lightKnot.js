@@ -64,18 +64,42 @@ if(wallType == 'g3d2') {
 
 //request.socket.removeAllListeners('timeout'); 
 
-wall.init(false,configuration.serialDevice,configuration.serialSpeed);
+wall.init(true,configuration.serialDevice,configuration.serialSpeed);
 
 console.log('Starting Server for '+configuration.name+' on port '+configuration.tcpPort);
 
 var openConnections = {};
-var displayBuffers = {};
+var displayBuffers = [];
 
 var pixelSize = configuration.bpp / 4;
 var frameSize = configuration.width*configuration.height*configuration.subpixel*pixelSize;
 
+var currentPrio = 0;
+
+for(var i = 0;i < 4; i++)
+{
+	var levelBuffer ='';
+
+	for(var j = 0;j < frameSize;j++)
+	{
+		levelBuffer+='0';
+	}
+	displayBuffers[i] = levelBuffer;
+}
+
+
+
 
 function updateCurrentPrio(){
+
+	currentPrio = 0;
+
+	for(var connectionId in openConnections){
+		if(openConnections[connectionId].priorityLevel > currentPrio){
+			currentPrio = openConnections[connectionId].priorityLevel;
+		}
+	}
+
 }
 
 function processPacket(data,connectionId)
@@ -116,12 +140,17 @@ function processPacket(data,connectionId)
 			if((x == 255)&&(y==255)){
 				
 				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
-				wall.setAllPixel(r,g,b);
+	
+				if(openConections[connectionId].priorityLevel >= currentPrio){
+					wall.setAllPixel(r,g,b);
+				}
 
 			}else if ((x < 24)&&(y < 24)){
 	
 				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
-				wall.setPixel(x,y,r,g,b);
+				if(openConections[connectionId].priorityLevel >= currentPrio){
+					wall.setPixel(x,y,r,g,b);
+				}
 			
 			}else{
 				return 'bad'
@@ -151,7 +180,9 @@ function processPacket(data,connectionId)
 
 			displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 
-			wall.setFrame(buf);
+			if(openConnections[connectionId].priorityLevel >= currentPrio){
+				wall.setFrame(buf);
+			}
 	
 			return 'ok';
 		
