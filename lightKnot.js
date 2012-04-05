@@ -345,7 +345,7 @@ function processPacket(data,connectionId)
 		case 11:
 
 
-			return util.inspect(ioSockets,false,null)+':'+util.inspect(openConnections, false, null)+':'+currentPrio;
+			return 'ioSocket:'+util.inspect(ioSockets,false,1)+'\r\n\r\nopenConnections:'+util.inspect(openConnections, false, 1)+'\r\n\r\ncurrentPrio:'+currentPrio;
 		
 		case 10:
 			// push message
@@ -495,7 +495,7 @@ var pushFrames = function() {
 		var frame = '';
 		for(var sockId in ioSockets){
 
-			if(ioSockets[sockId].ioWindow < 5){
+			if(ioSockets[sockId].ioWindow < 50){
 
 				if(frame == ''){
 					frame = displayBuffers[currentPrio].toString('binary');
