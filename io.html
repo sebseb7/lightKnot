@@ -8,12 +8,16 @@
 
 			function onLoad(){
 
-				var socket = io.connect('http://localhost:2340');
+
+				var socket = io.connect('http://'+window.location.hostname+':'+window.location.port);
 				var canvas = document.getElementById("canvas1");
 				canvas = canvas.getContext("2d");
 				socket.on('frame', function (data) {
 					
 					var buf = data;
+
+					document.getElementById('bd').innerHTML=data;
+
 
 					socket.emit('ack');
 
@@ -39,8 +43,8 @@
 
 	</head>
 
-	<body style="background-color:black" onload="onLoad()">
-
+	<body style="background-color:blue" onload="onLoad()" >
+		<div id="bd"></div>
 
 		<!--<div id="back" style="background-image: url(bg/bg_444.jpg);width:900px;height:596px;position:absolute;top:0px;left:0px">-->
 		<div id="back" style="width:900px;height:596px;position:absolute;top:0px;left:0px">
