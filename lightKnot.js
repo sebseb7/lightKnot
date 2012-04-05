@@ -452,9 +452,29 @@ var io = require('socket.io').listen(httpSrv);
 httpSrv.listen(configuration.tcpPort+1000,'::');
 
 io.set('log level', 1); 
+io.enable('browser client minification');  // send minified client
+io.enable('browser client etag');          // apply etag caching logic based on version number
+io.enable('browser client gzip');          // gzip the file
+io.set('transports', [                     // enable all transports (optional if you want flashsocket)
+	'websocket'
+	, 'flashsocket'
+	, 'htmlfile'
+	, 'xhr-polling'
+	, 'jsonp-polling'
+]);
 
 function handler (req, res) {
-	fs.readFile(__dirname + '/io.html',
+	
+	console.log(util.inspect(req,false,1));
+
+	var filename = '/io.html';
+
+	if(req.url == '/background_'+configuration.name+'.jpg')
+	{
+		filename = req.url;
+	}
+
+	fs.readFile(__dirname + filename,
 	function (err, data) {
 		if (err) {
 			res.writeHead(500);
@@ -485,6 +505,8 @@ io.sockets.on('connection', function (socket) {
 		delete ioSockets[ioSocketId];
 	});
 
+	socket.emit('init',configuration);
+
 });
 
 
@@ -502,7 +524,7 @@ var pushFrames = function() {
 				}
 
 				ioSockets[sockId].ioWindow++;
-				ioSockets[sockId].ioSocket.emit('frame',frame);
+				ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow});
 			}
 		}
 		lastFrame = displayBuffers[currentPrio];

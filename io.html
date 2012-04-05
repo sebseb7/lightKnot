@@ -12,41 +12,59 @@
 				var socket = io.connect('http://'+window.location.hostname+':'+window.location.port);
 				var canvas = document.getElementById("canvas1");
 				canvas = canvas.getContext("2d");
-				socket.on('frame', function (data) {
-					
-					var buf = data;
 
-					document.getElementById('bd').innerHTML=data;
-
-
-					socket.emit('ack');
-
-					var i = 0;
-					for(i = 0; i < 24 ;i++)
-					{
-						var j=0;
-						for(j = 0; j < 24 ;j++)
-						{
-							
-							var r = buf.charCodeAt(((23-i)*24+(23-j))*3);
-							var g = buf.charCodeAt(((23-i)*24+(23-j))*3+1);
-							var b = buf.charCodeAt(((23-i)*24+(23-j))*3+2);
-
-							canvas.fillStyle = "rgb("+r+","+g+","+b+")";
-							canvas.fillRect( j*10, (23-i)*10, 10, 10 );
+				socket.on('disconnect', function () {
 				
+					document.getElementById('message1').innerHTML = 'disconnected';
+					document.getElementById('bdy').style.backgroundImage = "none";
+				
+				});
+
+				socket.on('init', function(configuration) {
+
+					document.getElementById('message1').innerHTML = 'connected to :'+configuration.name;
+					document.getElementById('bdy').style.backgroundImage = "url('background_"+configuration.name+".jpg')";
+
+
+					socket.on('frame', function (data) {
+						
+						var buf = data.buf;
+						document.getElementById('message2').innerHTML = 'server queue :'+data.ioWindow;
+
+						document.getElementById('message3').innerHTML=data.buf;
+
+
+						socket.emit('ack');
+
+						var i = 0;
+						for(i = 0; i < configuration.width;i++)
+						{
+							var j=0;
+							for(j = 0; j < configuration.height ;j++)
+							{
+								
+								var r = buf.charCodeAt(((23-i)*24+(23-j))*3);
+								var g = buf.charCodeAt(((23-i)*24+(23-j))*3+1);
+								var b = buf.charCodeAt(((23-i)*24+(23-j))*3+2);
+
+								canvas.fillStyle = "rgb("+r+","+g+","+b+")";
+								canvas.fillRect( j*10, (23-i)*10, 10, 10 );
+					
+							}
 						}
-					}
+					});
 				});
 			}
 		</script>
 
 	</head>
 
-	<body style="background-color:blue" onload="onLoad()" >
-		<div id="bd"></div>
+	<body style="background-color:blue" onload="onLoad()" id="bdy">
+	
+		<div id="message1"></div>
+		<div id="message2"></div>
+		<div id="message3"></div>
 
-		<!--<div id="back" style="background-image: url(bg/bg_444.jpg);width:900px;height:596px;position:absolute;top:0px;left:0px">-->
 		<div id="back" style="width:900px;height:596px;position:absolute;top:0px;left:0px">
 			<canvas id="canvas1" width="240" height="240" style="margin-left:250px;padding-top:260px"></canvas>
 		</div>
