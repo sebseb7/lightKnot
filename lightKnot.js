@@ -345,7 +345,7 @@ function processPacket(data,connectionId)
 		case 11:
 
 
-			return util.inspect(openConnections, false, null)+':'+currentPrio;
+			return util.inspect(iosockets,false,null)+':'+util.inspect(openConnections, false, null)+':'+currentPrio;
 		
 		case 10:
 			// push message
