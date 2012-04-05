@@ -66,7 +66,17 @@ if(wallType == 'g3d2') {
 
 //request.socket.removeAllListeners('timeout'); 
 
-wall.init(false,configuration.serialDevice,configuration.serialSpeed);
+var hardwareAvailable = true;
+
+try{
+	var stats = fs.statSync(configuration.serialDevice);
+	console.log("running with hardware");
+} catch(e) {
+	hardwareAvailable = false;
+	console.log("running without hardware");
+}
+
+wall.init(hardwareAvailable,configuration.serialDevice,configuration.serialSpeed);
 
 console.log('Starting Server for '+configuration.name+' on port '+configuration.tcpPort);
 
