@@ -70,8 +70,7 @@ exports.setPixel = function(x,y,r,g,b) {
 	var buf = new Buffer([x+1,y+1,r,g,b]);
 
 	if(ledWallConnection){
-		ledWallConnection.write(magic_42);
-		ledWallConnection.write(escapeData(buf));
+		ledWallConnection.write(concatBuffers(magic_42,escapeData(buf)));
 	}
 
 }
@@ -80,8 +79,7 @@ exports.setCeiling = function(x,r,g,b,w) {
 	var buf = new Buffer([x,r,g,b,w]);
 
 	if(ledWallConnection){
-		ledWallConnection.write(magic_42);
-		ledWallConnection.write(escapeData(buf));
+		ledWallConnection.write(concatBuffers(magic_42,escapeData(buf)));
 	}
 
 }
@@ -90,9 +88,34 @@ exports.setCeiling = function(x,r,g,b,w) {
 exports.setFrame = function(buf) {
 
 	if(ledWallConnection){
-		ledWallConnection.write(magic_23);
-		ledWallConnection.write(escapeData(buf));
+		ledWallConnection.write(concatBuffers(magic_23,escapeData(buf)));
 	}
 
+}
+
+
+function concatBuffers(bufs) {
+	if (!Array.isArray(bufs)) {
+		bufs = Array.prototype.slice.call(arguments);
+	}
+
+	var bufsToConcat = [], length = 0;
+	bufs.forEach(function (buf) {
+		if (buf) {
+			if (!Buffer.isBuffer(buf)) {
+				buf = new Buffer(buf);
+			}
+			length += buf.length;
+			bufsToConcat.push(buf);
+		}
+	});
+
+	var concatBuf = new Buffer(length), index = 0;
+	bufsToConcat.forEach(function (buf) {
+		buf.copy(concatBuf, index, 0, buf.length);
+		index += buf.length;
+	});
+
+	return concatBuf;
 }
 
