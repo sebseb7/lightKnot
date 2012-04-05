@@ -2,7 +2,7 @@
 	<head>
 		<title>Pentawall Live Image</title>
 
-		<script src="http://localhost:2340/socket.io/socket.io.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
 
 		<script>
 
@@ -31,7 +31,7 @@
 						var buf = data.buf;
 						document.getElementById('message2').innerHTML = 'server queue :'+data.ioWindow;
 
-						document.getElementById('message3').innerHTML=data.buf;
+						//document.getElementById('message3').innerHTML=data.buf;
 
 
 						socket.emit('ack');
@@ -48,7 +48,7 @@
 								var b = buf.charCodeAt(((23-i)*24+(23-j))*3+2);
 
 								canvas.fillStyle = "rgb("+r+","+g+","+b+")";
-								canvas.fillRect( j*10, (23-i)*10, 10, 10 );
+								canvas.fillRect( j*8, (23-i)*8, 8, 8 );
 					
 							}
 						}

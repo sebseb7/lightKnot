@@ -533,5 +533,5 @@ var pushFrames = function() {
 };
 
 
-setInterval(pushFrames,50);
+setInterval(pushFrames,70);
 
