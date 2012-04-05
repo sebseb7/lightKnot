@@ -2,6 +2,7 @@
 
 var net = require('net');
 var fs = require('fs');
+var util = require("util");
 
 var nnl = '\r\n'; //network new line
 var configuration;
@@ -11,6 +12,7 @@ var wall = require('./wallOutput.js');
 
 var currentRecFd;
 var currentRecStarted;
+var lastFrame;
 
 
 if(wallType == 'g3d2') {
@@ -110,7 +112,7 @@ function updateCurrentPrio(){
 	var newPrio = 0;
 
 	for(var connId in openConnections){
-		if(openConnections[connId].priorityLevel > currentPrio){
+		if(openConnections[connId].priorityLevel > newPrio){
 			newPrio = openConnections[connId].priorityLevel;
 		}
 	}
@@ -190,13 +192,15 @@ function processPacket(data,connectionId)
 					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+1] = g;
 					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+2] = b;
 				}
+				lastFrame = null;
 
 			}else if ((x < 24)&&(y < 24)){
 	
 				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3] = r;
 				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+1] = g;
 				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+2] = b;
-				
+				lastFrame = null;
+
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setPixel(x,y,r,g,b);
 					
@@ -338,6 +342,11 @@ function processPacket(data,connectionId)
 			}
 			return 'bad';
 
+		case 11:
+
+
+			return util.inspect(openConnections, false, null)+':'+currentPrio;
+		
 		case 10:
 			// push message
 			
@@ -437,8 +446,25 @@ server.listen(configuration.tcpPort, '::');
 
 var ioSockets = {};
 var ioSocketIdCtr = 0;
-var io = require('socket.io').listen(configuration.tcpPort+1000,null,'::');
+
+var httpSrv = require('http').createServer(handler);
+var io = require('socket.io').listen(httpSrv);
+httpSrv.listen(configuration.tcpPort+1000,'::');
+
 io.set('log level', 1); 
+
+function handler (req, res) {
+	fs.readFile(__dirname + '/io.html',
+	function (err, data) {
+		if (err) {
+			res.writeHead(500);
+			return res.end('Error loading index.html');
+		}
+
+		res.writeHead(200);
+		res.end(data);
+	});
+}
 
 io.sockets.on('connection', function (socket) {
 
@@ -462,7 +488,6 @@ io.sockets.on('connection', function (socket) {
 });
 
 
-var lastFrame;
 
 var pushFrames = function() {
 
