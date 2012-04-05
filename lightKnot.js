@@ -1,6 +1,7 @@
 #!/usr/local/bin/node
 
 var net = require('net');
+var fs = require('fs');
 
 var nnl = '\r\n'; //network new line
 var configuration;
@@ -8,7 +9,8 @@ var wallType = process.argv[2];
 
 var wall = require('./wallOutput.js');
 
-
+var currentRecFd;
+var currentRecStarted;
 
 
 if(wallType == 'g3d2') {
@@ -22,7 +24,7 @@ if(wallType == 'g3d2') {
 		subpixelOrder      : 'g',
 		ceilingLed 		   : false,
 		name               : 'g3d2',
-		recordingPath      : '~/wallRecords_g3d2',
+		recordingPath      : 'wallRecords_g3d2',
 		serialDevice       : '/dev/....',
 		serialSpeed        : 500000
 	};
@@ -38,7 +40,7 @@ if(wallType == 'g3d2') {
 		subpixelOrder      : 'rrggbb',
 		ceilingLed 		   : false,
 		name               : 'Pentawall',
-		recordingPath      : '~/wallRecords_pw',
+		recordingPath      : 'wallRecords_pw',
 		serialDevice       : '/dev/....',
 		serialSpeed        : 500000
 	};
@@ -54,7 +56,7 @@ if(wallType == 'g3d2') {
 		subpixelOrder      : 'rrggbb',
 		ceilingLed 		   : true,
 		name               : 'PentawallHD',
-		recordingPath      : '~/wallRecords_pwhd',
+		recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
 		serialDevice       : '/dev/cu.usbserial-A100DDXM',
 		serialSpeed        : 500000
 	};
@@ -153,32 +155,77 @@ function processPacket(data,connectionId)
 	
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setAllPixel(r,g,b);
+					
+					if(currentRecFd){
+						
+						var buf = new Buffer([x,y,r,g,b]);
+						var strBuf = new Buffer(buf.toString('hex'));
+						
+						if(currentRecStarted == null){
+							currentRecStarted = Date.now();
+						};
+					
+						fs.writeSync(currentRecFd,parseInt(Date.now()-currentRecStarted,10)+" 02",null);
+						
+						fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
+						fs.writeSync(currentRecFd,"\r\n",null);
+					}
 				}
 			
 
-				// buffer not a string !
-				var newBuffer ='';
 
 				for(var j = 0;j < (configuration.width*configuration.height);j++)
 				{
-					//newBuffer+=rgb;
+					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3] = r;
+					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+1] = g;
+					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+2] = b;
 				}
-				displayBuffers[openConnections[connectionId].priorityLevel] = newBuffer;
 
 			}else if ((x < 24)&&(y < 24)){
 	
-				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
+				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3] = r;
+				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+1] = g;
+				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+2] = b;
+				
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setPixel(x,y,r,g,b);
+					
+					if(currentRecFd){
+						
+						var buf = new Buffer([x,y,r,g,b]);
+						var strBuf = new Buffer(buf.toString('hex'));
+						
+						if(currentRecStarted == null){
+							currentRecStarted = Date.now();
+						};
+					
+						fs.writeSync(currentRecFd,parseInt(Date.now()-currentRecStarted,10)+" 02",null);
+						
+						fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
+						fs.writeSync(currentRecFd,"\r\n",null);
+					}
 				}
 
-				//SET THE CURRENT BUFFER
 			
 			}else if ((x <= 0xf4)&&(x >= 0xf0)){
 	
 				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setCeiling(x,y,r,g,b);
+					if(currentRecFd){
+						
+						var buf = new Buffer([x,y,r,g,b]);
+						var strBuf = new Buffer(buf.toString('hex'));
+
+						if(currentRecStarted == null){
+							currentRecStarted = Date.now();
+						};
+					
+						fs.writeSync(currentRecFd,parseInt(Date.now()-currentRecStarted,10)+" 02",null);
+						
+						fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
+						fs.writeSync(currentRecFd,"\r\n",null);
+					}
 				}
 			
 			}else{
@@ -191,18 +238,15 @@ function processPacket(data,connectionId)
 			
 			var strFrame = data.substr(2,frameSize);
 	
-			if(strFrame.length != frameSize)
-			{
+			if(strFrame.length != frameSize){
 				return 'bad';
 			}
 	
 			var buf = new Buffer(strFrame.length/2);
 
-			for(var a = 0; a < strFrame.length/2;a++)
-			{
+			for(var a = 0; a < strFrame.length/2;a++){
 				buf[a] = parseInt(strFrame.substr(a*2,2),16);
-				if(isNaN(buf[a]))
-				{
+				if(isNaN(buf[a]))	{
 					return 'bad';
 				}
 			}
@@ -213,6 +257,20 @@ function processPacket(data,connectionId)
 
 			if(openConnections[connectionId].priorityLevel >= currentPrio){
 				wall.setFrame(buf);
+				if(currentRecFd){
+					
+					var strBuf = new Buffer(buf.toString('hex'));
+					
+					if(currentRecStarted == null){
+						currentRecStarted = Date.now();
+					};
+				
+					fs.writeSync(currentRecFd,parseInt(Date.now()-currentRecStarted,10)+" 03",null);
+					
+					fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
+					fs.writeSync(currentRecFd,"\r\n",null);
+				}
+
 			}
 	
 			return 'ok';
@@ -221,8 +279,7 @@ function processPacket(data,connectionId)
 				
 			var targetPrio = parseInt(data.substr(2,2),16);
 
-			if(isNaN(targetPrio) || (targetPrio > 4))
-			{
+			if(isNaN(targetPrio) || (targetPrio > 4)){
 				return 'bad';
 			}
 
@@ -234,12 +291,64 @@ function processPacket(data,connectionId)
 		
 		case 5:
 			// start recodring
+
+
+			fs.open(configuration.recordingPath+Date.now()+'.rec','a',0666,function(err,fd) {
+
+				console.log('start rec '+err);
+
+				currentRecFd = fd;
+				currentRecStarted = null;
+
+			
+			});
+
+			return 'ok';
+
 		case 6:
 			// stop recording
+			
+			currentRecFd = null;
+			currentRecStarted = null;
+			return 'ok';
+
 		case 9:
 			// subscribe to message channel
+			var cmd = parseInt(data.substr(2,2),16);
+
+			if(cmd == 1)
+			{
+				openConnections[connectionId].messageSubscription = true;
+				return 'good';
+			}
+			if(cmd == 0)
+			{
+				openConnections[connectionId].messageSubscription = false;
+				return 'good';
+			}
+			return 'bad';
+
 		case 10:
 			// push message
+			
+			var strData = data.substr(2,data.length-2);
+	
+			var buf = new Buffer(strData.length/2);
+
+			for(var a = 0; a < strData.length/2;a++){
+				buf[a] = parseInt(strData.substr(a*2,2),16);
+				if(isNaN(buf[a]))	{
+					return 'bad';
+				}
+			}
+			for(var connId in openConnections){
+				if(openConnections[connId].messageSubscription == true){
+
+					openConnections[connId].connectionSocket.write("09"+buf.toString('hex')+nnl);
+				
+				}
+			}
+			return 'ok';
 
 		default:
 			return 'bad';
@@ -259,7 +368,8 @@ var server = net.createServer(function (socket) {
 								lastActivity                : Date.now(), 
 								readBuffer                  : '',
 								messageChannelSubscriptions : {},
-								connectionSocket            : socket
+								connectionSocket            : socket,
+								messageSubscription 		: false
 							} 
 	updateCurrentPrio();
 	console.log('new connection '+connectionId);
