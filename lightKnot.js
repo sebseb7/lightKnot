@@ -66,7 +66,7 @@ if(wallType == 'g3d2') {
 
 //request.socket.removeAllListeners('timeout'); 
 
-wall.init(false,configuration.serialDevice,configuration.serialSpeed);
+wall.init(true,configuration.serialDevice,configuration.serialSpeed);
 
 console.log('Starting Server for '+configuration.name+' on port '+configuration.tcpPort);
 
@@ -423,11 +423,11 @@ server.on('connection', function (e) {
 });
 
 
-server.listen(configuration.tcpPort, '::1');
+server.listen(configuration.tcpPort, '2001:6f8:1194:c3d2:223:dfff:fe7e:c80a');
 
 var ioSockets = {};
 var ioSocketIdCtr = 0;
-var io = require('socket.io').listen(configuration.tcpPort+1000);
+var io = require('socket.io').listen(configuration.tcpPort+1000,null,'2001:6f8:1194:c3d2:223:dfff:fe7e:c80a');
 io.set('log level', 1); 
 
 io.sockets.on('connection', function (socket) {
