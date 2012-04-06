@@ -1,14 +1,39 @@
-#!/usr/local/bin/node
+#!/usr/bin/env node
 
 var net = require('net');
 var fs = require('fs');
 var util = require("util");
+var os = require('os');
+var wall = require('./wallOutput.js');
 
 var nnl = '\r\n'; //network new line
 var configuration;
-var wallType = process.argv[2];
+var wallType;
 
-var wall = require('./wallOutput.js');
+wallType = process.argv[2];
+
+if(!wallType){
+	//on ernie we default to g3d2
+	if(os.hostname() == 'ernie'){
+		wallType='g3d2';
+	}
+	//on bender we default to PentawallHD
+	if(os.hostname() == 'bender'){
+		wallType='PentawallHD';
+	}
+	//on elmor we default to pentawall
+	if(os.hostname() == 'elmo'){
+		wallType='pentawall';
+	}
+}
+
+
+console.log(wallType);
+
+
+
+
+
 
 var currentRecFd;
 var currentRecStarted;
@@ -26,8 +51,8 @@ if(wallType == 'g3d2') {
 		subpixelOrder      : 'g',
 		ceilingLed 		   : false,
 		name               : 'g3d2',
-		recordingPath      : 'wallRecords_g3d2',
-		serialDevice       : '/dev/....',
+		recordingPath      : '/opt/wallRecords_g3d2/rec',
+		serialDevice       : '/dev/ttyUSB0',
 		serialSpeed        : 500000
 	};
 
@@ -69,6 +94,9 @@ if(wallType == 'g3d2') {
 //request.socket.removeAllListeners('timeout'); 
 
 var hardwareAvailable = true;
+
+
+console.log(configuration.serialDevice);
 
 try{
 	var stats = fs.statSync(configuration.serialDevice);
@@ -147,26 +175,40 @@ function processPacket(data,connectionId)
 					'bpp='+configuration.bpp+nnl+
 					'name='+configuration.name+nnl+
 					'subpixelOrder='+configuration.subpixelOrder+nnl+
-					'ceilingLed='+configuration.ceilingLed;
+					'ceilingLed='+configuration.ceilingLed+nnl;
 		case 2:
 		
 			var x = parseInt(data.substr(2,2),16);
 			var y = parseInt(data.substr(4,2),16);
-			var r = parseInt(data.substr(6,2),16);
-			var g = parseInt(data.substr(8,2),16);
-			var b = parseInt(data.substr(10,2),16);
+			var r;
+			var g;
+			var b;
 
-			if(isNaN(x)||isNaN(y)||isNaN(r)||isNaN(g)||isNaN(b)){
-				return 'bad';
+			if(configuration.subpixel == 3){
+				r = parseInt(data.substr(6,2),16);
+				g = parseInt(data.substr(8,2),16);
+				b = parseInt(data.substr(10,2),16);
+				if(isNaN(x)||isNaN(y)||isNaN(r)||isNaN(g)||isNaN(b)){
+					return 'bad';
+				}
+			}else{
+				g = parseInt(data.substr(6,1),16);
+				if(isNaN(x)||isNaN(y)||isNaN(g)){
+					return 'bad';
+				}
 			}
-
 
 			if((x == 255)&&(y==255)){
 				
 				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 	
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
-					wall.setAllPixel(r,g,b);
+
+					if(configuration.subpixel == 3){
+						wall.setAllPixel(r,g,b);
+					}else{
+						wall.setAllPixel(g);
+					}
 					
 					if(currentRecFd){
 						
@@ -194,15 +236,25 @@ function processPacket(data,connectionId)
 				}
 				lastFrame = null;
 
-			}else if ((x < 24)&&(y < 24)){
+			}else if ((x < configuration.width)&&(y < configuration.height)){
 	
-				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3] = r;
-				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+1] = g;
-				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+2] = b;
+				if(configuration.subpixel == 3){
+					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuratoin.width+x)*3] = r;
+					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+1] = g;
+					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+2] = b;
+				}else{
+					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)] = g;
+				}
+				
 				lastFrame = null;
 
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
-					wall.setPixel(x,y,r,g,b);
+
+					if(configuration.subpixel == 3){
+						wall.setPixel(x,y,r,g,b);
+					}else{
+						wall.setPixel(x,y,g);
+					}
 					
 					if(currentRecFd){
 						
@@ -256,14 +308,37 @@ function processPacket(data,connectionId)
 				return 'bad';
 			}
 	
-			var buf = new Buffer(strFrame.length/2);
 
-			for(var a = 0; a < strFrame.length/2;a++){
-				buf[a] = parseInt(strFrame.substr(a*2,2),16);
-				if(isNaN(buf[a]))	{
-					return 'bad';
+			var buf;
+
+			if(configuration.subpixel == 3){
+
+				buf = new Buffer(strFrame.length/2);
+	
+				for(var a = 0; a < strFrame.length/2;a++){
+					buf[a] = parseInt(strFrame.substr(a*2,2),16);
+					if(isNaN(buf[a]))	{
+						return 'bad';
+					}
 				}
+
+			}else{
+
+				buf = new Buffer(strFrame.length/2);
+	
+				for(var a = 0; a < strFrame.length/2;a++){
+					buf[a] = 
+						parseInt(strFrame.substr(a*2,1),16) +
+						parseInt(strFrame.substr(a*2+1,1),16)*0x10
+					;
+					if(isNaN(buf[a]))	{
+						return 'bad';
+					}
+				}
+
 			}
+
+
 
 			displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 
@@ -273,7 +348,7 @@ function processPacket(data,connectionId)
 				wall.setFrame(buf);
 				if(currentRecFd){
 					
-					var strBuf = new Buffer(buf.toString('hex'));
+					var strBuf = new Buffer(strFrame);
 					
 					if(currentRecStarted == null){
 						currentRecStarted = Date.now();
@@ -322,6 +397,7 @@ function processPacket(data,connectionId)
 		case 6:
 			// stop recording
 			
+			fs.close(currentRecFd,function() { console.log('recording done') });
 			currentRecFd = null;
 			currentRecStarted = null;
 			return 'ok';
@@ -333,12 +409,12 @@ function processPacket(data,connectionId)
 			if(cmd == 1)
 			{
 				openConnections[connectionId].messageSubscription = true;
-				return 'good';
+				return 'ok';
 			}
 			if(cmd == 0)
 			{
 				openConnections[connectionId].messageSubscription = false;
-				return 'good';
+				return 'ok';
 			}
 			return 'bad';
 
@@ -378,7 +454,7 @@ function processPacket(data,connectionId)
 var connectionIdCtr = 0;
 var server = net.createServer(function (socket) {
 	socket.setNoDelay(true);
-	socket.write('welcome (00+<enter> for help)'+nnl);
+	socket.write('00welcome (00+<enter> for help)'+nnl);
 
 	var connectionId = connectionIdCtr++;
 
@@ -465,7 +541,7 @@ io.set('transports', [                     // enable all transports (optional if
 
 function handler (req, res) {
 	
-	console.log(util.inspect(req,false,1));
+//	console.log(util.inspect(req,false,1));
 
 	var filename = '/io.html';
 
