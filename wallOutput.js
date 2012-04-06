@@ -64,16 +64,36 @@ exports.setAllPixel = function(r,g,b) {
 
 }
 
+exports.setAllPixel = function(g) {
+
+	var buf = new Buffer([0,0,g]);
+
+	if(ledWallConnection){
+		ledWallConnection.write(magic_42);
+		ledWallConnection.write(escapeData(buf));
+	}
+
+}
+
 
 exports.setPixel = function(x,y,r,g,b) {
-
 	var buf = new Buffer([x+1,y+1,r,g,b]);
+
+	if(ledWallConnection){
+		ledWallConnection.write(concatBuffers(magic_42,escapeData(buf)));
+	}
+}
+
+exports.setPixel = function(x,y,g) {
+
+	var buf = new Buffer([x+1,y+1,g]);
 
 	if(ledWallConnection){
 		ledWallConnection.write(concatBuffers(magic_42,escapeData(buf)));
 	}
 
 }
+
 exports.setCeiling = function(x,r,g,b,w) {
 
 	var buf = new Buffer([x,r,g,b,w]);
