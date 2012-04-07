@@ -460,7 +460,7 @@ function processPacket(data,connectionId)
 var connectionIdCtr = 0;
 var server = net.createServer(function (socket) {
 	socket.setNoDelay(true);
-	socket.write('00welcome (00+<enter> for help)'+nnl);
+	socket.write('00welcome to '+configuration.name+' (00+<enter> for help)'+nnl);
 
 	var connectionId = connectionIdCtr++;
 
