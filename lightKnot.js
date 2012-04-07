@@ -1,4 +1,4 @@
-#!/usr/bin/env PATH=$PATH:/usr/local/bin node
+#!/usr/bin/env node
 
 var net = require('net');
 var fs = require('fs');
