@@ -6,6 +6,7 @@
 
 		<script>
 
+
 			function onLoad(){
 
 
@@ -51,6 +52,9 @@
 
 					socket.on('frame', function (data) {
 						
+
+
+
 						var buf = data.buf;
 						document.getElementById('message2').innerHTML = 'server queue :'+data.ioWindow;
 
@@ -61,9 +65,6 @@
 
 
 						socket.emit('ack');
-
-
-
 
 						if(configuration.name == 'g3d2')
 						{
@@ -131,8 +132,7 @@
 								}
 							}
 						}
-
-
+						
 
 					});
 				});
