@@ -144,6 +144,9 @@ function updateCurrentPrio(){
 
 function processPacket(data,connectionId)
 {
+
+	var myPrio = openConnections[connectionId].priorityLevel;
+
 	switch(parseInt(data.substr(0,2),16))
 	{
 		case 0:
@@ -154,7 +157,7 @@ function processPacket(data,connectionId)
 			'   * xxyy == FFFF : set all pixel'+nnl+nnl+
 			((configuration.ceilingLed==true) ? '02xxrrggbbww set CeilingLED '+nnl+'   * xx   == F1..F4 ; F0 (all) '+nnl+nnl:'')+
 			'03'+configuration.subpixelOrder+'..'+configuration.subpixelOrder+' set all '+(configuration.width*configuration.height)+' pixel'+nnl+nnl+
-			'04ll set priority level 00..04 , currentLevel: '+openConnections[connectionId].priorityLevel+nnl;
+			'04ll set priority level 00..04 , currentLevel: '+myPrio+nnl;
 
 		case 1:
 			return  'width='+configuration.width+nnl+
@@ -193,15 +196,15 @@ function processPacket(data,connectionId)
 					var a;
 					for(a = 0 ; a < configuration.width*configuration.height; a++)
 					{
-						onePixel.copy(displayBuffers[openConnections[connectionId].priorityLevel],a*3);
+						onePixel.copy(displayBuffers[myPrio],a*3);
 					};
 				}else{
 					for(a = 0 ; a < configuration.width*configuration.height/2; a++)
 					{
-						displayBuffers[openConnections[connectionId].priorityLevel][a] = g*0x10+g;
+						displayBuffers[myPrio][a] = g*0x10+g;
 					};
 				}	
-				if(openConnections[connectionId].priorityLevel >= currentPrio){
+				if(myPrio >= currentPrio){
 
 					if(configuration.subpixel == 3){
 						wall.setAllPixel3(r,g,b);
@@ -229,26 +232,35 @@ function processPacket(data,connectionId)
 
 				for(var j = 0;j < (configuration.width*configuration.height);j++)
 				{
-					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3] = r;
-					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+1] = g;
-					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+2] = b;
+					displayBuffers[myPrio][configuration.width*configuration.height*3] = r;
+					displayBuffers[myPrio][configuration.width*configuration.height*3+1] = g;
+					displayBuffers[myPrio][configuration.width*configuration.height*3+2] = b;
 				}
 				lastFrame = null;
 
 			}else if ((x < configuration.width)&&(y < configuration.height)){
 	
 				if(configuration.subpixel == 3){
-					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3] = r;
-					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+1] = g;
-					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+2] = b;
+					displayBuffers[myPrio][(y*configuration.width+x)*3] = r;
+					displayBuffers[myPrio][(y*configuration.width+x)*3+1] = g;
+					displayBuffers[myPrio][(y*configuration.width+x)*3+2] = b;
 				}else{
-					// wrong: one 4 bit should be set
-					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)] = g;
+
+					var xModulo = x % 2;
+					var pixelIdx  = y*(configuration.width/2)+((x-xModulo)/2);
+					
+					if(xModulo == 0){
+						displayBuffers[myPrio][pixelIdx] = g+
+						(displayBuffers[myPrio][pixelIdx] & 0xf0);
+					}else{
+						displayBuffers[myPrio][pixelIdx] = g*0x10+
+						(displayBuffers[myPrio][pixelIdx] & 0x0f);
+					}
 				}
 				
 				lastFrame = null;
 
-				if(openConnections[connectionId].priorityLevel >= currentPrio){
+				if(myPrio >= currentPrio){
 
 					if(configuration.subpixel == 3){
 						wall.setPixel3(x,y,r,g,b);
@@ -276,10 +288,10 @@ function processPacket(data,connectionId)
 			}else if ((x <= 0xf4)&&(x >= 0xf0)){
 
 
-				ceilBuffers[openConnections[connectionId].priorityLevel] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
+				ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
 				lastCeilFrame = null;
 	
-				if(openConnections[connectionId].priorityLevel >= currentPrio){
+				if(myPrio >= currentPrio){
 					wall.setCeiling(x,y,r,g,b);
 					if(currentRecFd){
 						
@@ -343,11 +355,11 @@ function processPacket(data,connectionId)
 
 
 
-			displayBuffers[openConnections[connectionId].priorityLevel] = buf;
+			displayBuffers[myPrio] = buf;
 
 
 
-			if(openConnections[connectionId].priorityLevel >= currentPrio){
+			if(myPrio >= currentPrio){
 				wall.setFrame(buf);
 				if(currentRecFd){
 					
