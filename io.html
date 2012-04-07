@@ -9,12 +9,13 @@
 
 			function onLoad(){
 
+				var canvasEl = document.getElementById("canvas1");
+				var canvas = canvasEl.getContext("2d");
+				var canvasCeilEl = document.getElementById("canvasCeil");
+				var canvasCeil = canvasCeilEl.getContext("2d");
+
 
 				var socket = io.connect('http://'+window.location.hostname+':'+window.location.port);
-				var canvas = document.getElementById("canvas1");
-				canvas = canvas.getContext("2d");
-				var canvasCeil = document.getElementById("canvasCeil");
-				canvasCeil = canvasCeil.getContext("2d");
 
 				socket.on('disconnect', function () {
 				
@@ -34,41 +35,32 @@
 					document.getElementById('message1').innerHTML = 'connected to :'+configuration.name;
 					document.getElementById('bdy').style.backgroundImage = "url('background_"+configuration.name+".jpg')";
 
-//setting canvas size does not work this way
+					//setting canvas size does not work this way
 
 					if(configuration.name == 'g3d2')
 					{
-//						canvas.width=configuration.width*4;
-//						canvas.height=configuration.height*4;
+						canvasEl.style.marginLeft = '305px';
+						canvasEl.style.paddingTop = '280px';
+			//			canvasEl.style.width=configuration.width*4;
+			//			canvasEl.style.height=configuration.height*4;
 					}
 					if(configuration.name == 'PentawallHD')
 					{
-//						canvas.width=configuration.width*8;
-//						canvas.height=configuration.height*8;
+			//			canvasEl.width=configuration.width*8;
+			//			canvasEl.height=configuration.height*8;
 					}
-//						canvas.width='500px';
-//						canvas.height='500px';
-
 
 					socket.on('frame', function (data) {
 						
 
-
-
 						var buf = data.buf;
 						document.getElementById('message2').innerHTML = 'server queue :'+data.ioWindow;
-
-						if(data.ceilBuf)
-						{
-							document.getElementById('message3').innerHTML=data.ceilBuf;
-						}
-
 
 						socket.emit('ack');
 
 						if(configuration.name == 'g3d2')
 						{
-							canvas.fillStyle = "rgb(0,40,0)";
+							canvas.fillStyle = "rgb(0,20,0)";
 							canvas.fillRect( 0,0, configuration.width*4, configuration.height*4 );
 
 							var i = 0;
@@ -141,14 +133,14 @@
 
 	</head>
 
-	<body style="background-color:blue" onload="onLoad()" id="bdy">
+	<body style="background-color:blue;background-repeat:no-repeat;" onload="onLoad()" id="bdy">
 	
 		<div id="message1"></div>
 		<div id="message2"></div>
 		<div id="message3"></div>
 		<div id="message4"></div>
 
-		<div id="back" style="position:absolute;top:0px;left:0px">
+		<div id="back" style="position:absolute;top:0px;left:0px;">
 			<canvas id="canvas1" width="300" height="300"  style="margin-left:250px;padding-top:260px"></canvas>
 			<canvas id="canvasCeil" width="250" height="250"  style="margin-left:0px;padding-top:260px"></canvas>
 		</div>
