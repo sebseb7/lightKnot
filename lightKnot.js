@@ -6,6 +6,14 @@ var util = require("util");
 var os = require('os');
 var wall = require('./wallOutput.js');
 
+
+process.on('uncaughtException', function (err) {
+
+	console.log('uncaught exception: '+ err)
+	console.log(err.trace());
+
+});
+
 var nnl = '\r\n'; //network new line
 var configuration;
 var wallType;
@@ -38,6 +46,7 @@ console.log(wallType);
 var currentRecFd;
 var currentRecStarted;
 var lastFrame;
+var lastCeilFrame;
 
 
 if(wallType == 'g3d2') {
@@ -112,6 +121,7 @@ console.log('Starting Server for '+configuration.name+' on port '+configuration.
 
 var openConnections = {};
 var displayBuffers = [];
+var ceilBuffers = [];
 
 var pixelSize = configuration.bpp / 4;
 var frameSize = configuration.width*configuration.height*configuration.subpixel*pixelSize;
@@ -120,16 +130,8 @@ var currentPrio = 0;
 
 for(var i = 0;i < 4; i++)
 {
-
-	// buffer ! not a string
-
-	var levelBuffer ='';
-
-	for(var j = 0;j < frameSize;j++)
-	{
-		levelBuffer+='0';
-	}
-	displayBuffers[i] = levelBuffer;
+	displayBuffers[i] = new Buffer(configuration.width*configuration.height*configuration.subpixel*(configuration.bpp / 8));
+	ceilBuffers[i] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 }
 
 
@@ -274,6 +276,10 @@ function processPacket(data,connectionId)
 
 			
 			}else if ((x <= 0xf4)&&(x >= 0xf0)){
+
+
+				ceilBuffers[openConnections[connectionId].priorityLevel] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
+				lastCeilFrame = null;
 	
 				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
@@ -469,7 +475,7 @@ var server = net.createServer(function (socket) {
 	updateCurrentPrio();
 	console.log('new connection '+connectionId);
 
-	//console.log(openConnections);
+//	console.log(openConnections);
 
 	socket.setTimeout(5*60*1000, function () {
 		socket.write('timeout'+nnl);
@@ -507,6 +513,7 @@ var server = net.createServer(function (socket) {
 });
 
 server.on('connection', function (e) {
+//	console.log('connection event ',e);
 	if (e.code == 'EADDRINUSE') {
 		console.log('Address in use, retrying...');
 		
@@ -524,6 +531,8 @@ var ioSockets = {};
 var ioSocketIdCtr = 0;
 
 var httpSrv = require('http').createServer(handler);
+
+
 var io = require('socket.io').listen(httpSrv);
 httpSrv.listen(configuration.tcpPort+1000,'::');
 
@@ -541,8 +550,6 @@ io.set('transports', [                     // enable all transports (optional if
 
 function handler (req, res) {
 	
-//	console.log(util.inspect(req,false,1));
-
 	var filename = '/io.html';
 
 	if(req.url == '/background_'+configuration.name+'.jpg')
@@ -589,21 +596,33 @@ io.sockets.on('connection', function (socket) {
 
 var pushFrames = function() {
 
-	if(lastFrame != displayBuffers[currentPrio]){
+	if( 
+		(lastFrame != displayBuffers[currentPrio])||
+		(lastCeilFrame != ceilBuffers[currentPrio])
+	){
 		var frame = '';
+		var ceilFrame = '';
 		for(var sockId in ioSockets){
 
 			if(ioSockets[sockId].ioWindow < 50){
 
 				if(frame == ''){
 					frame = displayBuffers[currentPrio].toString('binary');
+					ceilFrame = ceilBuffers[currentPrio].toString('binary');
 				}
 
 				ioSockets[sockId].ioWindow++;
-				ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow});
+				if(configuration.ceilingLed)
+				{
+					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow,ceilBuf:ceilFrame});
+				}else{
+					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow});
+				}
+				
 			}
 		}
 		lastFrame = displayBuffers[currentPrio];
+		lastCeil  = ceilBuffers[currentPrio];
 	}
 
 };
