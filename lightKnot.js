@@ -205,7 +205,7 @@ function processPacket(data,connectionId)
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 
 					if(configuration.subpixel == 3){
-						wall.setAllPixel(r,g,b);
+						wall.setAllPixel3(r,g,b);
 					}else{
 						wall.setAllPixel(g);
 					}
@@ -239,7 +239,7 @@ function processPacket(data,connectionId)
 			}else if ((x < configuration.width)&&(y < configuration.height)){
 	
 				if(configuration.subpixel == 3){
-					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuratoin.width+x)*3] = r;
+					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3] = r;
 					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+1] = g;
 					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+2] = b;
 				}else{
@@ -251,7 +251,7 @@ function processPacket(data,connectionId)
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 
 					if(configuration.subpixel == 3){
-						wall.setPixel(x,y,r,g,b);
+						wall.setPixel3(x,y,r,g,b);
 					}else{
 						wall.setPixel(x,y,g);
 					}
