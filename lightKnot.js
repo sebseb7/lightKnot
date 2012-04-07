@@ -287,8 +287,15 @@ function processPacket(data,connectionId)
 			
 			}else if ((x <= 0xf4)&&(x >= 0xf0)){
 
-
-				ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
+				if(x == 0xf0){
+					ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
+				}else{
+					ceilBuffers[myPrio][x-0xf1] = y;
+					ceilBuffers[myPrio][x-0xf1+1] = r;
+					ceilBuffers[myPrio][x-0xf1+2] = g;
+					ceilBuffers[myPrio][x-0xf1+3] = b;;
+				}
+				
 				lastCeilFrame = null;
 	
 				if(myPrio >= currentPrio){
