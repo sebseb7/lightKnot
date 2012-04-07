@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env PATH=$PATH:/usr/local/bin node
 
 var net = require('net');
 var fs = require('fs');
@@ -99,7 +99,7 @@ var hardwareAvailable = true;
 console.log(configuration.serialDevice);
 
 try{
-	var stats = fs.statSync(configuration.serialDevice);
+//	var stats = fs.statSync(configuration.serialDevice);
 	console.log("running with hardware");
 } catch(e) {
 	hardwareAvailable = false;
