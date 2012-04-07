@@ -196,9 +196,9 @@ function processPacket(data,connectionId)
 						onePixel.copy(displayBuffers[openConnections[connectionId].priorityLevel],a*3);
 					};
 				}else{
-					for(a = 0 ; a < configuration.width*configuration.height; a++)
+					for(a = 0 ; a < configuration.width*configuration.height/2; a++)
 					{
-						displayBuffers[openConnections[connectionId].priorityLevel][a] = g;
+						displayBuffers[openConnections[connectionId].priorityLevel][a] = g*0x10+g;
 					};
 				}	
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
@@ -242,6 +242,7 @@ function processPacket(data,connectionId)
 					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+1] = g;
 					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)*3+2] = b;
 				}else{
+					// wrong: one 4 bit should be set
 					displayBuffers[openConnections[connectionId].priorityLevel][(y*configuration.width+x)] = g;
 				}
 				
