@@ -6,7 +6,6 @@ var util = require("util");
 var os = require('os');
 var wall = require('./wallOutput.js');
 
-
 process.on('uncaughtException', function (err) {
 
 	console.log('uncaught exception: '+ err)
@@ -34,13 +33,6 @@ if(!wallType){
 		wallType='pentawall';
 	}
 }
-
-
-console.log(wallType);
-
-
-
-
 
 
 var currentRecFd;
@@ -98,21 +90,14 @@ if(wallType == 'g3d2') {
 	};
 
 }
-//var ledWallConnection = new serialPort(configuration.serialDevice, {baudrate: configuration.serialSpeed});
-
-//request.socket.removeAllListeners('timeout'); 
-
 var hardwareAvailable = true;
-
-
-console.log(configuration.serialDevice);
 
 try{
 //	var stats = fs.statSync(configuration.serialDevice);
-	console.log("running with hardware");
+	console.log("running "+configuration.name+" with hardware on port "+configuration.tcpPort);
 } catch(e) {
 	hardwareAvailable = false;
-	console.log("running without hardware");
+	console.log("running "+configuration.name+" without hardware on port "+configuration.tcpPort);
 }
 
 wall.init(hardwareAvailable,configuration.serialDevice,configuration.serialSpeed);
@@ -131,6 +116,7 @@ var currentPrio = 0;
 for(var i = 0;i < 4; i++)
 {
 	displayBuffers[i] = new Buffer(configuration.width*configuration.height*configuration.subpixel*(configuration.bpp / 8));
+	displayBuffers[i].fill(0);
 	ceilBuffers[i] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 }
 
@@ -202,8 +188,19 @@ function processPacket(data,connectionId)
 
 			if((x == 255)&&(y==255)){
 				
-				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
-	
+				if(configuration.subpixel == 3){
+					var onePixel = new Buffer([r,g,b]);
+					var a;
+					for(a = 0 ; a < configuration.width*configuration.height; a++)
+					{
+						onePixel.copy(displayBuffers[openConnections[connectionId].priorityLevel],a*3);
+					};
+				}else{
+					for(a = 0 ; a < configuration.width*configuration.height; a++)
+					{
+						displayBuffers[openConnections[connectionId].priorityLevel][a] = g;
+					};
+				}	
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 
 					if(configuration.subpixel == 3){
@@ -281,7 +278,6 @@ function processPacket(data,connectionId)
 				ceilBuffers[openConnections[connectionId].priorityLevel] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
 				lastCeilFrame = null;
 	
-				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 					wall.setCeiling(x,y,r,g,b);
 					if(currentRecFd){
@@ -475,8 +471,6 @@ var server = net.createServer(function (socket) {
 	updateCurrentPrio();
 	console.log('new connection '+connectionId);
 
-//	console.log(openConnections);
-
 	socket.setTimeout(5*60*1000, function () {
 		socket.write('timeout'+nnl);
 		socket.end();
@@ -513,7 +507,6 @@ var server = net.createServer(function (socket) {
 });
 
 server.on('connection', function (e) {
-//	console.log('connection event ',e);
 	if (e.code == 'EADDRINUSE') {
 		console.log('Address in use, retrying...');
 		
