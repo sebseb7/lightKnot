@@ -202,8 +202,20 @@ function processPacket(data,connectionId)
 
 			if((x == 255)&&(y==255)){
 				
-				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
-	
+				if(configuration.subpixel == 3){
+					var onePixel = new Buffer([r,g,b]);
+					var a;
+					for(a = 0 ; a < configuration.width*configuration.height; a++)
+					{
+						onePixel.copy(displayBuffers[openConnections[connectionId].priorityLevel],a*3);
+					};
+					console.log(displayBuffers[openConnections[connectionId].priorityLevel]);
+				}else{
+					for(a = 0 ; a < configuration.width*configuration.height; a++)
+					{
+						displayBuffers[openConnections[connectionId].priorityLevel][a] = g;
+					};
+				}	
 				if(openConnections[connectionId].priorityLevel >= currentPrio){
 
 					if(configuration.subpixel == 3){
