@@ -290,10 +290,10 @@ function processPacket(data,connectionId)
 				if(x == 0xf0){
 					ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
 				}else{
-					ceilBuffers[myPrio][x-0xf1] = y;
-					ceilBuffers[myPrio][x-0xf1+1] = r;
-					ceilBuffers[myPrio][x-0xf1+2] = g;
-					ceilBuffers[myPrio][x-0xf1+3] = b;;
+					ceilBuffers[myPrio][(x-0xf1)*4] = y;
+					ceilBuffers[myPrio][(x-0xf1)*4+1] = r;
+					ceilBuffers[myPrio][(x-0xf1)*4+2] = g;
+					ceilBuffers[myPrio][(x-0xf1)*4+3] = b;;
 				}
 				
 				lastCeilFrame = null;
