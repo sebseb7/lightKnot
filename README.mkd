@@ -2,6 +2,7 @@
 
 nodejs server daemon for the various ledwalls at the c3d2 hackerspace.
 
+also prodvides a preview website, like this one : http://bender.hq.c3d2.de:2340  (ipv6 only)
 
 ## Supported LedWalls
 
