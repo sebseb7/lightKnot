@@ -21,7 +21,7 @@ also prodvides a preview website, like this one : http://bender.hq.c3d2.de:2340 
 
 ## Protocol
 
-* basics : all numbers are encoded in 16bit hexaceimal ascii text, like this: `01020304050608090a0b0c0d0e0f10` (case insensitive)
+* basics : all numbers are encoded in 16bit hexadecimal ascii text, like this: `01020304050608090a0b0c0d0e0f10` (case insensitive)
 
 * commands:
 - 00 prints help screen
