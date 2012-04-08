@@ -1,18 +1,44 @@
-#!/usr/local/bin/node
+#!/usr/bin/env node
 
 var net = require('net');
 var fs = require('fs');
 var util = require("util");
+var os = require('os');
+var wall = require('./wallOutput.js');
+
+process.on('uncaughtException', function (err) {
+
+	console.log('uncaught exception: '+ err)
+	console.log(err.trace());
+
+});
 
 var nnl = '\r\n'; //network new line
 var configuration;
-var wallType = process.argv[2];
+var wallType;
 
-var wall = require('./wallOutput.js');
+wallType = process.argv[2];
+
+if(!wallType){
+	//on ernie we default to g3d2
+	if(os.hostname() == 'ernie'){
+		wallType='g3d2';
+	}
+	//on bender we default to PentawallHD
+	if(os.hostname() == 'bender'){
+		wallType='PentawallHD';
+	}
+	//on elmor we default to pentawall
+	if(os.hostname() == 'elmo'){
+		wallType='pentawall';
+	}
+}
+
 
 var currentRecFd;
 var currentRecStarted;
 var lastFrame;
+var lastCeilFrame;
 
 
 if(wallType == 'g3d2') {
@@ -26,8 +52,8 @@ if(wallType == 'g3d2') {
 		subpixelOrder      : 'g',
 		ceilingLed 		   : false,
 		name               : 'g3d2',
-		recordingPath      : 'wallRecords_g3d2',
-		serialDevice       : '/dev/....',
+		recordingPath      : '/opt/wallRecords_g3d2/rec',
+		serialDevice       : '/dev/ttyUSB0',
 		serialSpeed        : 500000
 	};
 
@@ -64,18 +90,14 @@ if(wallType == 'g3d2') {
 	};
 
 }
-//var ledWallConnection = new serialPort(configuration.serialDevice, {baudrate: configuration.serialSpeed});
-
-//request.socket.removeAllListeners('timeout'); 
-
 var hardwareAvailable = true;
 
 try{
-	var stats = fs.statSync(configuration.serialDevice);
-	console.log("running with hardware");
+//	var stats = fs.statSync(configuration.serialDevice);
+	console.log("running "+configuration.name+" with hardware on port "+configuration.tcpPort);
 } catch(e) {
 	hardwareAvailable = false;
-	console.log("running without hardware");
+	console.log("running "+configuration.name+" without hardware on port "+configuration.tcpPort);
 }
 
 wall.init(hardwareAvailable,configuration.serialDevice,configuration.serialSpeed);
@@ -84,6 +106,7 @@ console.log('Starting Server for '+configuration.name+' on port '+configuration.
 
 var openConnections = {};
 var displayBuffers = [];
+var ceilBuffers = [];
 
 var pixelSize = configuration.bpp / 4;
 var frameSize = configuration.width*configuration.height*configuration.subpixel*pixelSize;
@@ -92,16 +115,9 @@ var currentPrio = 0;
 
 for(var i = 0;i < 4; i++)
 {
-
-	// buffer ! not a string
-
-	var levelBuffer ='';
-
-	for(var j = 0;j < frameSize;j++)
-	{
-		levelBuffer+='0';
-	}
-	displayBuffers[i] = levelBuffer;
+	displayBuffers[i] = new Buffer(configuration.width*configuration.height*configuration.subpixel*(configuration.bpp / 8));
+	displayBuffers[i].fill(0);
+	ceilBuffers[i] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 }
 
 
@@ -128,6 +144,9 @@ function updateCurrentPrio(){
 
 function processPacket(data,connectionId)
 {
+
+	var myPrio = openConnections[connectionId].priorityLevel;
+
 	switch(parseInt(data.substr(0,2),16))
 	{
 		case 0:
@@ -138,7 +157,7 @@ function processPacket(data,connectionId)
 			'   * xxyy == FFFF : set all pixel'+nnl+nnl+
 			((configuration.ceilingLed==true) ? '02xxrrggbbww set CeilingLED '+nnl+'   * xx   == F1..F4 ; F0 (all) '+nnl+nnl:'')+
 			'03'+configuration.subpixelOrder+'..'+configuration.subpixelOrder+' set all '+(configuration.width*configuration.height)+' pixel'+nnl+nnl+
-			'04ll set priority level 00..04 , currentLevel: '+openConnections[connectionId].priorityLevel+nnl;
+			'04ll set priority level 00..04 , currentLevel: '+myPrio+nnl;
 
 		case 1:
 			return  'width='+configuration.width+nnl+
@@ -147,26 +166,51 @@ function processPacket(data,connectionId)
 					'bpp='+configuration.bpp+nnl+
 					'name='+configuration.name+nnl+
 					'subpixelOrder='+configuration.subpixelOrder+nnl+
-					'ceilingLed='+configuration.ceilingLed;
+					'ceilingLed='+configuration.ceilingLed+nnl;
 		case 2:
 		
 			var x = parseInt(data.substr(2,2),16);
 			var y = parseInt(data.substr(4,2),16);
-			var r = parseInt(data.substr(6,2),16);
-			var g = parseInt(data.substr(8,2),16);
-			var b = parseInt(data.substr(10,2),16);
+			var r;
+			var g;
+			var b;
 
-			if(isNaN(x)||isNaN(y)||isNaN(r)||isNaN(g)||isNaN(b)){
-				return 'bad';
+			if(configuration.subpixel == 3){
+				r = parseInt(data.substr(6,2),16);
+				g = parseInt(data.substr(8,2),16);
+				b = parseInt(data.substr(10,2),16);
+				if(isNaN(x)||isNaN(y)||isNaN(r)||isNaN(g)||isNaN(b)){
+					return 'bad';
+				}
+			}else{
+				g = parseInt(data.substr(6,1),16);
+				if(isNaN(x)||isNaN(y)||isNaN(g)){
+					return 'bad';
+				}
 			}
-
 
 			if((x == 255)&&(y==255)){
 				
-				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
-	
-				if(openConnections[connectionId].priorityLevel >= currentPrio){
-					wall.setAllPixel(r,g,b);
+				if(configuration.subpixel == 3){
+					var onePixel = new Buffer([r,g,b]);
+					var a;
+					for(a = 0 ; a < configuration.width*configuration.height; a++)
+					{
+						onePixel.copy(displayBuffers[myPrio],a*3);
+					};
+				}else{
+					for(a = 0 ; a < configuration.width*configuration.height/2; a++)
+					{
+						displayBuffers[myPrio][a] = g*0x10+g;
+					};
+				}	
+				if(myPrio >= currentPrio){
+
+					if(configuration.subpixel == 3){
+						wall.setAllPixel3(r,g,b);
+					}else{
+						wall.setAllPixel(g);
+					}
 					
 					if(currentRecFd){
 						
@@ -188,21 +232,41 @@ function processPacket(data,connectionId)
 
 				for(var j = 0;j < (configuration.width*configuration.height);j++)
 				{
-					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3] = r;
-					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+1] = g;
-					displayBuffers[openConnections[connectionId].priorityLevel][configuration.width*configuration.height*3+2] = b;
+					displayBuffers[myPrio][configuration.width*configuration.height*3] = r;
+					displayBuffers[myPrio][configuration.width*configuration.height*3+1] = g;
+					displayBuffers[myPrio][configuration.width*configuration.height*3+2] = b;
 				}
 				lastFrame = null;
 
-			}else if ((x < 24)&&(y < 24)){
+			}else if ((x < configuration.width)&&(y < configuration.height)){
 	
-				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3] = r;
-				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+1] = g;
-				displayBuffers[openConnections[connectionId].priorityLevel][(x*24+y)*3+2] = b;
+				if(configuration.subpixel == 3){
+					displayBuffers[myPrio][(y*configuration.width+x)*3] = r;
+					displayBuffers[myPrio][(y*configuration.width+x)*3+1] = g;
+					displayBuffers[myPrio][(y*configuration.width+x)*3+2] = b;
+				}else{
+
+					var xModulo = x % 2;
+					var pixelIdx  = y*(configuration.width/2)+((x-xModulo)/2);
+					
+					if(xModulo == 0){
+						displayBuffers[myPrio][pixelIdx] = g+
+						(displayBuffers[myPrio][pixelIdx] & 0xf0);
+					}else{
+						displayBuffers[myPrio][pixelIdx] = g*0x10+
+						(displayBuffers[myPrio][pixelIdx] & 0x0f);
+					}
+				}
+				
 				lastFrame = null;
 
-				if(openConnections[connectionId].priorityLevel >= currentPrio){
-					wall.setPixel(x,y,r,g,b);
+				if(myPrio >= currentPrio){
+
+					if(configuration.subpixel == 3){
+						wall.setPixel3(x,y,r,g,b);
+					}else{
+						wall.setPixel(x,y,g);
+					}
 					
 					if(currentRecFd){
 						
@@ -222,9 +286,19 @@ function processPacket(data,connectionId)
 
 			
 			}else if ((x <= 0xf4)&&(x >= 0xf0)){
+
+				if(x == 0xf0){
+					ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
+				}else{
+					ceilBuffers[myPrio][(x-0xf1)*4] = y;
+					ceilBuffers[myPrio][(x-0xf1)*4+1] = r;
+					ceilBuffers[myPrio][(x-0xf1)*4+2] = g;
+					ceilBuffers[myPrio][(x-0xf1)*4+3] = b;;
+				}
+				
+				lastCeilFrame = null;
 	
-				//displayBuffers[openConnections[connectionId].priorityLevel] = buf;
-				if(openConnections[connectionId].priorityLevel >= currentPrio){
+				if(myPrio >= currentPrio){
 					wall.setCeiling(x,y,r,g,b);
 					if(currentRecFd){
 						
@@ -256,24 +330,47 @@ function processPacket(data,connectionId)
 				return 'bad';
 			}
 	
-			var buf = new Buffer(strFrame.length/2);
 
-			for(var a = 0; a < strFrame.length/2;a++){
-				buf[a] = parseInt(strFrame.substr(a*2,2),16);
-				if(isNaN(buf[a]))	{
-					return 'bad';
+			var buf;
+
+			if(configuration.subpixel == 3){
+
+				buf = new Buffer(strFrame.length/2);
+	
+				for(var a = 0; a < strFrame.length/2;a++){
+					buf[a] = parseInt(strFrame.substr(a*2,2),16);
+					if(isNaN(buf[a]))	{
+						return 'bad';
+					}
 				}
+
+			}else{
+
+				buf = new Buffer(strFrame.length/2);
+	
+				for(var a = 0; a < strFrame.length/2;a++){
+					buf[a] = 
+						parseInt(strFrame.substr(a*2,1),16) +
+						parseInt(strFrame.substr(a*2+1,1),16)*0x10
+					;
+					if(isNaN(buf[a]))	{
+						return 'bad';
+					}
+				}
+
 			}
 
-			displayBuffers[openConnections[connectionId].priorityLevel] = buf;
+
+
+			displayBuffers[myPrio] = buf;
 
 
 
-			if(openConnections[connectionId].priorityLevel >= currentPrio){
+			if(myPrio >= currentPrio){
 				wall.setFrame(buf);
 				if(currentRecFd){
 					
-					var strBuf = new Buffer(buf.toString('hex'));
+					var strBuf = new Buffer(strFrame);
 					
 					if(currentRecStarted == null){
 						currentRecStarted = Date.now();
@@ -322,6 +419,7 @@ function processPacket(data,connectionId)
 		case 6:
 			// stop recording
 			
+			fs.close(currentRecFd,function() { console.log('recording done') });
 			currentRecFd = null;
 			currentRecStarted = null;
 			return 'ok';
@@ -333,12 +431,12 @@ function processPacket(data,connectionId)
 			if(cmd == 1)
 			{
 				openConnections[connectionId].messageSubscription = true;
-				return 'good';
+				return 'ok';
 			}
 			if(cmd == 0)
 			{
 				openConnections[connectionId].messageSubscription = false;
-				return 'good';
+				return 'ok';
 			}
 			return 'bad';
 
@@ -378,7 +476,7 @@ function processPacket(data,connectionId)
 var connectionIdCtr = 0;
 var server = net.createServer(function (socket) {
 	socket.setNoDelay(true);
-	socket.write('welcome (00+<enter> for help)'+nnl);
+	socket.write('00welcome to '+configuration.name+' (00+<enter> for help)'+nnl);
 
 	var connectionId = connectionIdCtr++;
 
@@ -392,8 +490,6 @@ var server = net.createServer(function (socket) {
 							} 
 	updateCurrentPrio();
 	console.log('new connection '+connectionId);
-
-	//console.log(openConnections);
 
 	socket.setTimeout(5*60*1000, function () {
 		socket.write('timeout'+nnl);
@@ -448,6 +544,8 @@ var ioSockets = {};
 var ioSocketIdCtr = 0;
 
 var httpSrv = require('http').createServer(handler);
+
+
 var io = require('socket.io').listen(httpSrv);
 httpSrv.listen(configuration.tcpPort+1000,'::');
 
@@ -465,8 +563,6 @@ io.set('transports', [                     // enable all transports (optional if
 
 function handler (req, res) {
 	
-	console.log(util.inspect(req,false,1));
-
 	var filename = '/io.html';
 
 	if(req.url == '/background_'+configuration.name+'.jpg')
@@ -513,25 +609,37 @@ io.sockets.on('connection', function (socket) {
 
 var pushFrames = function() {
 
-	if(lastFrame != displayBuffers[currentPrio]){
+	if( 
+		(lastFrame != displayBuffers[currentPrio])||
+		(lastCeilFrame != ceilBuffers[currentPrio])
+	){
 		var frame = '';
+		var ceilFrame = '';
 		for(var sockId in ioSockets){
 
 			if(ioSockets[sockId].ioWindow < 50){
 
 				if(frame == ''){
 					frame = displayBuffers[currentPrio].toString('binary');
+					ceilFrame = ceilBuffers[currentPrio].toString('binary');
 				}
 
 				ioSockets[sockId].ioWindow++;
-				ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow});
+				if(configuration.ceilingLed)
+				{
+					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow,ceilBuf:ceilFrame});
+				}else{
+					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow});
+				}
+				
 			}
 		}
 		lastFrame = displayBuffers[currentPrio];
+		lastCeil  = ceilBuffers[currentPrio];
 	}
 
 };
 
 
-setInterval(pushFrames,50);
+setInterval(pushFrames,70);
 

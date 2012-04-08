@@ -2,16 +2,20 @@
 	<head>
 		<title>Pentawall Live Image</title>
 
-		<script src="http://localhost:2340/socket.io/socket.io.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
 
 		<script>
 
+
 			function onLoad(){
+
+				var canvasEl = document.getElementById("canvas1");
+				var canvas = canvasEl.getContext("2d");
+				var canvasCeilEl = document.getElementById("canvasCeil");
+				var canvasCeil = canvasCeilEl.getContext("2d");
 
 
 				var socket = io.connect('http://'+window.location.hostname+':'+window.location.port);
-				var canvas = document.getElementById("canvas1");
-				canvas = canvas.getContext("2d");
 
 				socket.on('disconnect', function () {
 				
@@ -20,38 +24,108 @@
 				
 				});
 
+				socket.on('connecting', function (transport) {
+				
+					document.getElementById('message3').innerHTML += transport;
+				
+				});
+
 				socket.on('init', function(configuration) {
 
 					document.getElementById('message1').innerHTML = 'connected to :'+configuration.name;
 					document.getElementById('bdy').style.backgroundImage = "url('background_"+configuration.name+".jpg')";
 
+					//setting canvas size does not work this way
+
+					if(configuration.name == 'g3d2')
+					{
+						canvasEl.style.marginLeft = '305px';
+						canvasEl.style.paddingTop = '280px';
+			//			canvasEl.style.width=configuration.width*4;
+			//			canvasEl.style.height=configuration.height*4;
+					}
+					if(configuration.name == 'PentawallHD')
+					{
+			//			canvasEl.width=configuration.width*8;
+			//			canvasEl.height=configuration.height*8;
+					}
 
 					socket.on('frame', function (data) {
 						
+
 						var buf = data.buf;
 						document.getElementById('message2').innerHTML = 'server queue :'+data.ioWindow;
 
-						document.getElementById('message3').innerHTML=data.buf;
-
-
 						socket.emit('ack');
 
-						var i = 0;
-						for(i = 0; i < configuration.width;i++)
+						if(configuration.name == 'g3d2')
 						{
-							var j=0;
-							for(j = 0; j < configuration.height ;j++)
-							{
-								
-								var r = buf.charCodeAt(((23-i)*24+(23-j))*3);
-								var g = buf.charCodeAt(((23-i)*24+(23-j))*3+1);
-								var b = buf.charCodeAt(((23-i)*24+(23-j))*3+2);
+							canvas.fillStyle = "rgb(0,20,0)";
+							canvas.fillRect( 0,0, configuration.width*4, configuration.height*4 );
 
-								canvas.fillStyle = "rgb("+r+","+g+","+b+")";
-								canvas.fillRect( j*10, (23-i)*10, 10, 10 );
-					
+							var i = 0;
+							for(i = 0; i < configuration.width/2;i++)
+							{
+								var j=0;
+								for(j = 0; j < configuration.height ;j++)
+								{
+							
+									var g = buf.charCodeAt( j * (configuration.width/2) + i );
+
+									canvas.beginPath();
+									var g1 = Math.floor( ( (g & 0x0f)*0x10 )*1.06);
+									var g1g = Math.floor( ( (g & 0x0f)*0x10 )*0.7);
+									canvas.fillStyle = "rgb("+g1g+","+g1+",0)";
+									canvas.arc(((i*2))*4+1.7, j*4+1.7,1.7,0,2*Math.PI,true);
+									canvas.fill();
+									
+									canvas.beginPath();
+									var g2 = Math.floor(( g- (g & 0x0f))*1.06);
+									var g2g = Math.floor(( g- (g & 0x0f))*0.7);
+									canvas.fillStyle = "rgb("+g2g+","+g2+",0)";
+									canvas.arc(((i*2)+1)*4+1.7, j*4+1.7,1.7,0,2*Math.PI,true);
+									canvas.fill();
+								}
 							}
 						}
+						
+
+						if(configuration.name == 'PentawallHD')
+						{
+							var i = 0;
+							for(i = 0; i < configuration.width;i++)
+							{
+								var j=0;
+								for(j = 0; j < configuration.height ;j++)
+								{
+									canvas.fillStyle = "rgb(200,0,0)";
+									canvas.fillRect( j*8, (23-i)*8, 8, 8 );
+								
+									var r = buf.charCodeAt(((23-i)*24+(23-j))*3);
+									var g = buf.charCodeAt(((23-i)*24+(23-j))*3+1);
+									var b = buf.charCodeAt(((23-i)*24+(23-j))*3+2);
+
+									canvas.fillStyle = "rgb("+r+","+g+","+b+")";
+									canvas.fillRect( j*8, (23-i)*8, 8, 8 );
+								}
+							}
+							
+							if(data.ceilBuf)
+							{
+								var i = 0;
+								for(i = 0; i < 4; i++)
+								{
+									var r = data.ceilBuf.charCodeAt(i*4);
+									var g = data.ceilBuf.charCodeAt(i*4+1);
+									var b = data.ceilBuf.charCodeAt(i*4+2);
+
+									canvasCeil.fillStyle = "rgb("+r+","+g+","+b+")";
+									canvasCeil.fillRect( i*35,0, 30, 30 );
+								}
+							}
+						}
+						
+
 					});
 				});
 			}
@@ -64,9 +138,11 @@
 		<div id="message1"></div>
 		<div id="message2"></div>
 		<div id="message3"></div>
+		<div id="message4"></div>
 
-		<div id="back" style="width:900px;height:596px;position:absolute;top:0px;left:0px">
-			<canvas id="canvas1" width="240" height="240" style="margin-left:250px;padding-top:260px"></canvas>
+		<div id="back" style="position:absolute;top:0px;left:0px;">
+			<canvas id="canvas1" width="300" height="300"  style="margin-left:250px;padding-top:260px"></canvas>
+			<canvas id="canvasCeil" width="250" height="250"  style="margin-left:0px;padding-top:260px"></canvas>
 		</div>
 	</body>
 </html>
