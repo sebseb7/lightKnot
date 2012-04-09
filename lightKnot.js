@@ -19,7 +19,7 @@ var wallType;
 
 wallType = process.argv[2];
 
-if(!wallType){
+if(!wallType || wallType == undefined){
 	//on ernie we default to g3d2
 	if(os.hostname() == 'ernie'){
 		wallType='g3d2';
@@ -28,7 +28,7 @@ if(!wallType){
 	if(os.hostname() == 'bender'){
 		wallType='PentawallHD';
 	}
-	//on elmor we default to pentawall
+	//on elmo we default to pentawall
 	if(os.hostname() == 'elmo'){
 		wallType='Pentawall';
 	}
@@ -57,7 +57,7 @@ if(wallType == 'g3d2') {
 		serialSpeed        : 500000
 	};
 
-}else if(wallType == 'pentawall') {
+}else if(wallType == 'Pentawall') {
 
 	configuration = {
 		tcpPort            : 1338,
@@ -68,7 +68,7 @@ if(wallType == 'g3d2') {
 		subpixelOrder      : 'rrggbb',
 		ceilingLed 		   : false,
 		name               : 'Pentawall',
-		recordingPath      : 'wallRecords_pw',
+		recordingPath      : '/opt/idleloop/rec',
 		serialDevice       : '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A100DDXJ-if00-port0',
 		serialSpeed        : 500000
 	};
