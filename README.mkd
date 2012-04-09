@@ -1,0 +1,37 @@
+# lightKnot
+
+nodejs server daemon for the various ledwalls at the c3d2 hackerspace.
+
+also prodvides a preview website, like this one : http://bender.hq.c3d2.de:2340  (ipv6 only)
+
+## Supported LedWalls
+
+* original Pentawall (16x15x3x8)
+* g3d2 (72x32x1x4)
+* PentawallHD (23x23x3x8)
+
+## Dependencies
+
+* socket.io
+* node-serialport
+
+## Configuration
+
+* very simple, look into `lightKnow.js`
+
+## Protocol
+
+* basics : all numbers are encoded in 16bit hexadecimal ascii text, like this: `01020304050608090a0b0c0d0e0f10` (case insensitive)
+
+* commands:
+- 00 prints help screen
+- 01 show server configuration
+- 02 set pixel
+- 03 set frame
+- 04 change priority
+- 05 start recording
+- 06 stop recording
+- 09 subscribe to message channel
+- 0a sent message to channel
+
+
