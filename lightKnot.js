@@ -30,7 +30,7 @@ if(!wallType){
 	}
 	//on elmor we default to pentawall
 	if(os.hostname() == 'elmo'){
-		wallType='pentawall';
+		wallType='Pentawall';
 	}
 }
 
@@ -69,7 +69,7 @@ if(wallType == 'g3d2') {
 		ceilingLed 		   : false,
 		name               : 'Pentawall',
 		recordingPath      : 'wallRecords_pw',
-		serialDevice       : '/dev/....',
+		serialDevice       : '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A100DDXJ-if00-port0',
 		serialSpeed        : 500000
 	};
 
