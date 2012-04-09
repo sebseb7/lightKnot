@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+/*
+	todo:
+	update timestamp on every paket
+	remove sockets with timestamps older 5 minutes
+	drain tcp writes
+	check multipaket receives
+
+*/
+
+
 var net = require('net');
 var fs = require('fs');
 var util = require("util");
