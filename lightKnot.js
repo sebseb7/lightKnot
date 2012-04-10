@@ -95,7 +95,8 @@ if(wallType == 'g3d2') {
 		ceilingLed 		   : true,
 		name               : 'PentawallHD',
 		recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
-		serialDevice       : '/dev/cu.usbserial-A100DDXM',
+		serialDevice       : '/dev/cu.usbserial-A600dJ57',
+//		serialDevice       : '/dev/cu.usbserial-A100DDXM',
 		serialSpeed        : 500000
 	};
 
@@ -436,17 +437,26 @@ function processPacket(data,connectionId)
 
 		case 9:
 			// subscribe to message channel
-			var cmd = parseInt(data.substr(2,2),16);
+			var chan = parseInt(data.substr(2,2),16);
+			var cmd = parseInt(data.substr(4,2),16);
+
+			if(isNaN(chan)){
+				return 'bad';
+			}
 
 			if(cmd == 1)
 			{
-				openConnections[connectionId].messageSubscription = true;
+				openConnections[connectionId].messageChannelSubscription[chan] = true;
 				return 'ok';
 			}
 			if(cmd == 0)
 			{
-				openConnections[connectionId].messageSubscription = false;
-				return 'ok';
+				if(openConnections[connectionId].messageChannelSubscription[chan])
+				{
+					delete openConnections[connectionId].messageChannelSubscription[chan];
+					return 'ok';
+				}
+				return 'bad';
 			}
 			return 'bad';
 
@@ -458,8 +468,13 @@ function processPacket(data,connectionId)
 		case 10:
 			// push message
 			
-			var strData = data.substr(2,data.length-2);
+			var chan = parseInt(data.substr(2,2),16);
+			var strData = data.substr(4,data.length-4);
 	
+			if(isNaN(chan)){
+				return 'bad';
+			}
+
 			var buf = new Buffer(strData.length/2);
 
 			for(var a = 0; a < strData.length/2;a++){
@@ -469,9 +484,10 @@ function processPacket(data,connectionId)
 				}
 			}
 			for(var connId in openConnections){
-				if(openConnections[connId].messageSubscription == true){
+				if(openConnections[connId].messageChannelSubscription[chan] == true){
 
-					openConnections[connId].connectionSocket.write("09"+buf.toString('hex')+nnl);
+					openConnections[connId].connectionSocket.write("09"+data.substr(2,2)+buf.toString('hex')+nnl);
+
 				
 				}
 			}
@@ -494,9 +510,8 @@ var server = net.createServer(function (socket) {
 								priorityLevel               : 2, 
 								lastActivity                : Date.now(), 
 								readBuffer                  : '',
-								messageChannelSubscriptions : {},
-								connectionSocket            : socket,
-								messageSubscription 		: false
+								messageChannelSubscription  : {},
+								connectionSocket            : socket
 							} 
 	updateCurrentPrio();
 	console.log('new connection '+connectionId);
