@@ -665,6 +665,8 @@ var pushCeil = function() {
 };
 
 
-setInterval(pushFrames,70);
-setInterval(pushCeil,10);
+setInterval(pushFrames,60);
+if(configuration.ceilingLed==true){
+	setInterval(pushCeil,10);
+}
 
