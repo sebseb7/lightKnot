@@ -103,7 +103,7 @@ if(wallType == 'g3d2') {
 var hardwareAvailable = true;
 
 try{
-//	var stats = fs.statSync(configuration.serialDevice);
+	var stats = fs.statSync(configuration.serialDevice);
 	console.log("running "+configuration.name+" with hardware on port "+configuration.tcpPort);
 } catch(e) {
 	hardwareAvailable = false;
@@ -519,7 +519,7 @@ var server = net.createServer(function (socket) {
 		while( (pos=completeData.indexOf(nnl)) != -1)
 		{
 			var dataToProcess = completeData.substr(0,pos);
-			completeData = completeData.substr(pos+3,completeData.length);
+			completeData = completeData.substr(pos+nnl.length,completeData.length);
 
 			socket.write(processPacket(dataToProcess,connectionId)+nnl);
 		}
@@ -628,7 +628,13 @@ var pushFrames = function() {
 			if(ioSockets[sockId].ioWindow < 50){
 
 				if(frame == ''){
-					frame = displayBuffers[currentPrio].toString('binary');
+					try {	
+						frame = displayBuffers[currentPrio].toString('binary');
+					} catch(e) {
+						console.log(displayBuffers[currentPrio]);
+						throw(e);
+					}
+
 				}
 
 				ioSockets[sockId].ioWindow++;
