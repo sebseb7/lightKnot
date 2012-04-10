@@ -527,9 +527,9 @@ var server = net.createServer(function (socket) {
 
 	});
 	
-	socket.on('end' , function () {
+	socket.on('close' , function (had_error) {
 		//cleanup
-		console.log('connection '+connectionId+' closed');
+		console.log('connection '+connectionId+' closed ',had_error);
 		delete openConnections[connectionId];
 		updateCurrentPrio();
 	});
