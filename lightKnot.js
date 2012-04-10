@@ -620,31 +620,45 @@ io.sockets.on('connection', function (socket) {
 var pushFrames = function() {
 
 	if( 
-		(lastFrame != displayBuffers[currentPrio])||
-		(lastCeilFrame != ceilBuffers[currentPrio])
+		lastFrame != displayBuffers[currentPrio]
 	){
 		var frame = '';
-		var ceilFrame = '';
 		for(var sockId in ioSockets){
 
 			if(ioSockets[sockId].ioWindow < 50){
 
 				if(frame == ''){
 					frame = displayBuffers[currentPrio].toString('binary');
-					ceilFrame = ceilBuffers[currentPrio].toString('binary');
 				}
 
 				ioSockets[sockId].ioWindow++;
-				if(configuration.ceilingLed)
-				{
-					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow,ceilBuf:ceilFrame});
-				}else{
-					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow});
-				}
+				ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow,type:'wall'});
 				
 			}
 		}
 		lastFrame = displayBuffers[currentPrio];
+	}
+
+};
+var pushCeil = function() {
+
+	if( 
+		lastCeilFrame != ceilBuffers[currentPrio]
+	){
+		var ceilFrame = '';
+		for(var sockId in ioSockets){
+
+			if(ioSockets[sockId].ioWindow < 50){
+
+				if(ceilFrame == ''){
+					ceilFrame = ceilBuffers[currentPrio].toString('binary');
+				}
+
+				ioSockets[sockId].ioWindow++;
+				ioSockets[sockId].ioSocket.emit('frame',{buf:ceilFrame,ioWindow:ioSockets[sockId].ioWindow,type:'ceil'});
+				
+			}
+		}
 		lastCeil  = ceilBuffers[currentPrio];
 	}
 
@@ -652,4 +666,5 @@ var pushFrames = function() {
 
 
 setInterval(pushFrames,70);
+setInterval(pushCeil,10);
 
