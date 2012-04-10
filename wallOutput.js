@@ -3,14 +3,74 @@ var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
 
 var ledWallConnection;
 
+
 exports.init = function(realHardwareAvailable,device,baudrate) {
 
 	if(realHardwareAvailable)
 	{
 		console.log('initialize serial connection');	
-		ledWallConnection = new serialPort(device, {baudrate: baudrate});
-	}
+		
+		try{
+			ledWallConnection = new serialPort(device, {baudrate: baudrate});
+		} catch(e) {
+			console.log('connection error',e);
+			ledWallConnection = null;
+			setTimeout(function() {exports.init(true,device,baudrate)},5000);
+			return;
+		}
 
+		ledWallConnection.on ('error', function(e) {
+			console.log('serial device error 1');
+			console.log(e);
+			try {
+				ledWallConnection.close();
+			} catch (e) {
+			
+				console.log(e);
+			
+			}
+			ledWallConnection = null;
+			setTimeout(function() {exports.init(true,device,baudrate)},5000);
+		});
+
+		ledWallConnection.realWrite = ledWallConnection.write;
+
+		ledWallConnection.write = function(buf) {
+
+			var bytes_send;
+
+			try {
+				bytes_send = ledWallConnection.realWrite(buf);
+			} catch(e) {
+				console.log('serial device error 2');
+				console.log(e);
+				try {
+					ledWallConnection.close();
+				} catch (e) {
+			
+					console.log(e);
+			
+				}
+				ledWallConnection = null;
+				setTimeout(function() {exports.init(true,device,baudrate)},5000);
+
+			}
+
+			if(bytes_send == -1){
+				console.log('serial device error 3');
+				try {
+					ledWallConnection.close();
+				} catch (e) {
+			
+					console.log(e);
+			
+				}
+				ledWallConnection = null;
+				setTimeout(function() {exports.init(true,device,baudrate)},5000);
+			}
+
+		};
+	}
 
 }
 
