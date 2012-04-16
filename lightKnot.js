@@ -95,7 +95,7 @@ if(wallType == 'g3d2') {
 		ceilingLed 		   : true,
 		name               : 'PentawallHD',
 		recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
-		serialDevice       : '/dev/cu.usbserial-A600dJ57',
+		serialDevice       : '/dev/cu.usbserial-A8008I0K',
 //		serialDevice       : '/dev/cu.usbserial-A100DDXM',
 		serialSpeed        : 500000
 	};
