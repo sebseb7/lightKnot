@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+/*
+	todo:
+	update timestamp on every paket
+	remove sockets with timestamps older 5 minutes
+	drain tcp writes
+	check multipaket receives
+
+*/
+
+
 var net = require('net');
 var fs = require('fs');
 var util = require("util");
@@ -19,7 +29,7 @@ var wallType;
 
 wallType = process.argv[2];
 
-if(!wallType){
+if(!wallType || wallType == undefined){
 	//on ernie we default to g3d2
 	if(os.hostname() == 'ernie'){
 		wallType='g3d2';
@@ -28,9 +38,9 @@ if(!wallType){
 	if(os.hostname() == 'bender'){
 		wallType='PentawallHD';
 	}
-	//on elmor we default to pentawall
+	//on elmo we default to pentawall
 	if(os.hostname() == 'elmo'){
-		wallType='pentawall';
+		wallType='Pentawall';
 	}
 }
 
@@ -57,7 +67,7 @@ if(wallType == 'g3d2') {
 		serialSpeed        : 500000
 	};
 
-}else if(wallType == 'pentawall') {
+}else if(wallType == 'Pentawall') {
 
 	configuration = {
 		tcpPort            : 1338,
@@ -68,8 +78,8 @@ if(wallType == 'g3d2') {
 		subpixelOrder      : 'rrggbb',
 		ceilingLed 		   : false,
 		name               : 'Pentawall',
-		recordingPath      : 'wallRecords_pw',
-		serialDevice       : '/dev/....',
+		recordingPath      : '/opt/idleloop/rec',
+		serialDevice       : '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A100DDXJ-if00-port0',
 		serialSpeed        : 500000
 	};
 
@@ -85,7 +95,8 @@ if(wallType == 'g3d2') {
 		ceilingLed 		   : true,
 		name               : 'PentawallHD',
 		recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
-		serialDevice       : '/dev/cu.usbserial-A100DDXM',
+		serialDevice       : '/dev/cu.usbserial-A8008I0K',
+//		serialDevice       : '/dev/cu.usbserial-A100DDXM',
 		serialSpeed        : 500000
 	};
 
@@ -93,7 +104,7 @@ if(wallType == 'g3d2') {
 var hardwareAvailable = true;
 
 try{
-//	var stats = fs.statSync(configuration.serialDevice);
+	var stats = fs.statSync(configuration.serialDevice);
 	console.log("running "+configuration.name+" with hardware on port "+configuration.tcpPort);
 } catch(e) {
 	hardwareAvailable = false;
@@ -426,17 +437,26 @@ function processPacket(data,connectionId)
 
 		case 9:
 			// subscribe to message channel
-			var cmd = parseInt(data.substr(2,2),16);
+			var chan = parseInt(data.substr(2,2),16);
+			var cmd = parseInt(data.substr(4,2),16);
+
+			if(isNaN(chan)){
+				return 'bad';
+			}
 
 			if(cmd == 1)
 			{
-				openConnections[connectionId].messageSubscription = true;
+				openConnections[connectionId].messageChannelSubscription[chan] = true;
 				return 'ok';
 			}
 			if(cmd == 0)
 			{
-				openConnections[connectionId].messageSubscription = false;
-				return 'ok';
+				if(openConnections[connectionId].messageChannelSubscription[chan])
+				{
+					delete openConnections[connectionId].messageChannelSubscription[chan];
+					return 'ok';
+				}
+				return 'bad';
 			}
 			return 'bad';
 
@@ -448,8 +468,13 @@ function processPacket(data,connectionId)
 		case 10:
 			// push message
 			
-			var strData = data.substr(2,data.length-2);
+			var chan = parseInt(data.substr(2,2),16);
+			var strData = data.substr(4,data.length-4);
 	
+			if(isNaN(chan)){
+				return 'bad';
+			}
+
 			var buf = new Buffer(strData.length/2);
 
 			for(var a = 0; a < strData.length/2;a++){
@@ -459,9 +484,10 @@ function processPacket(data,connectionId)
 				}
 			}
 			for(var connId in openConnections){
-				if(openConnections[connId].messageSubscription == true){
+				if(openConnections[connId].messageChannelSubscription[chan] == true){
 
-					openConnections[connId].connectionSocket.write("09"+buf.toString('hex')+nnl);
+					openConnections[connId].connectionSocket.write("09"+data.substr(2,2)+buf.toString('hex')+nnl);
+
 				
 				}
 			}
@@ -484,9 +510,8 @@ var server = net.createServer(function (socket) {
 								priorityLevel               : 2, 
 								lastActivity                : Date.now(), 
 								readBuffer                  : '',
-								messageChannelSubscriptions : {},
-								connectionSocket            : socket,
-								messageSubscription 		: false
+								messageChannelSubscription  : {},
+								connectionSocket            : socket
 							} 
 	updateCurrentPrio();
 	console.log('new connection '+connectionId);
@@ -509,7 +534,7 @@ var server = net.createServer(function (socket) {
 		while( (pos=completeData.indexOf(nnl)) != -1)
 		{
 			var dataToProcess = completeData.substr(0,pos);
-			completeData = completeData.substr(pos+3,completeData.length);
+			completeData = completeData.substr(pos+nnl.length,completeData.length);
 
 			socket.write(processPacket(dataToProcess,connectionId)+nnl);
 		}
@@ -517,9 +542,9 @@ var server = net.createServer(function (socket) {
 
 	});
 	
-	socket.on('end' , function () {
+	socket.on('close' , function (had_error) {
 		//cleanup
-		console.log('connection '+connectionId+' closed');
+		console.log('connection '+connectionId+' closed ',had_error);
 		delete openConnections[connectionId];
 		updateCurrentPrio();
 	});
@@ -610,36 +635,59 @@ io.sockets.on('connection', function (socket) {
 var pushFrames = function() {
 
 	if( 
-		(lastFrame != displayBuffers[currentPrio])||
-		(lastCeilFrame != ceilBuffers[currentPrio])
+		lastFrame != displayBuffers[currentPrio]
 	){
 		var frame = '';
-		var ceilFrame = '';
 		for(var sockId in ioSockets){
 
 			if(ioSockets[sockId].ioWindow < 50){
 
 				if(frame == ''){
-					frame = displayBuffers[currentPrio].toString('binary');
-					ceilFrame = ceilBuffers[currentPrio].toString('binary');
+					try {	
+						frame = displayBuffers[currentPrio].toString('binary');
+					} catch(e) {
+						console.log(displayBuffers[currentPrio]);
+						throw(e);
+					}
+
 				}
 
 				ioSockets[sockId].ioWindow++;
-				if(configuration.ceilingLed)
-				{
-					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow,ceilBuf:ceilFrame});
-				}else{
-					ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow});
-				}
+				ioSockets[sockId].ioSocket.emit('frame',{buf:frame,ioWindow:ioSockets[sockId].ioWindow,type:'wall'});
 				
 			}
 		}
 		lastFrame = displayBuffers[currentPrio];
+	}
+
+};
+var pushCeil = function() {
+
+	if( 
+		lastCeilFrame != ceilBuffers[currentPrio]
+	){
+		var ceilFrame = '';
+		for(var sockId in ioSockets){
+
+			if(ioSockets[sockId].ioWindow < 50){
+
+				if(ceilFrame == ''){
+					ceilFrame = ceilBuffers[currentPrio].toString('binary');
+				}
+
+				ioSockets[sockId].ioWindow++;
+				ioSockets[sockId].ioSocket.emit('frame',{buf:ceilFrame,ioWindow:ioSockets[sockId].ioWindow,type:'ceil'});
+				
+			}
+		}
 		lastCeil  = ceilBuffers[currentPrio];
 	}
 
 };
 
 
-setInterval(pushFrames,70);
+setInterval(pushFrames,60);
+if(configuration.ceilingLed==true){
+	setInterval(pushCeil,10);
+}
 
