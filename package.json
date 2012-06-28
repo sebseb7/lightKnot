@@ -1,0 +1,21 @@
+{ "name": "lightKnot"
+, "version": "0.0.1"
+, "main": "./lightKnot.js"
+, "description": "server daemon for c3d2 LED walls"
+, "author": { "name": "sebseb7"
+  	    , "email": "seb@exse.net"
+ 	    , "web": "http://ddfpv.de/"
+ 	    }
+, "dependencies": { "socket.io": ">= 0.6", "serialport": ">= 0.7.3"}
+, "repositories": [{ "type": "git"
+		   , "path": "git://github.com/sebseb7/lightKnot.git"
+		   }]
+, "homepage": "https://github.com/sebseb7/lightKnot"
+, "bugs": "https://github.com/sebseb7/lightKnot/issues"
+, "maintainers": [{ "name": "sebseb7"
+		  , "email": "seb@exse.net"
+		  , "web": "http://ddfpv.de/"
+		 }]
+, "licenses": [{ "type": "APL" }]
+, "engines": { "node": ">=0.6.0" }
+}
