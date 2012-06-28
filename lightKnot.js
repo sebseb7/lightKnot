@@ -95,7 +95,7 @@ if(wallType == 'g3d2') {
 		ceilingLed 		   : true,
 		name               : 'PentawallHD',
 		recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
-		serialDevice       : '/dev/cu.usbserial-A8008I0K',
+		serialDevice       : '/dev/cu.usbserial-AE018X8S',
 //		serialDevice       : '/dev/cu.usbserial-A100DDXM',
 		serialSpeed        : 500000
 	};
@@ -296,7 +296,7 @@ function processPacket(data,connectionId)
 				}
 
 			
-			}else if ((x <= 0xf4)&&(x >= 0xf0)){
+			}else if ((x <= 0xf5)&&(x >= 0xf0)){
 
 				if(x == 0xf0){
 					ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
