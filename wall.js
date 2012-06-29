@@ -106,7 +106,7 @@ exports.newWall = function(wallType,wall) {
 	{
 		displayBuffers[i] = new Buffer(configuration.width*configuration.height*configuration.subpixel*(configuration.bpp / 8));
 		displayBuffers[i].fill(0);
-		ceilBuffers[i] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		ceilBuffers[i] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 	}
 
 
@@ -125,7 +125,18 @@ exports.newWall = function(wallType,wall) {
 		if(currentPrio != newPrio)
 		{
 			currentPrio = newPrio;
-			wall.setFrame(displayBuffers[currentPrio]);
+			if(configuration.height == 1)
+			{
+				wall.setCeiling(0xf1,ceilBuffers[currentPrio][0],ceilBuffers[currentPrio][1],ceilBuffers[currentPrio][2],ceilBuffers[currentPrio][3]);
+				wall.setCeiling(0xf2,ceilBuffers[currentPrio][4],ceilBuffers[currentPrio][5],ceilBuffers[currentPrio][6],ceilBuffers[currentPrio][7]);
+				wall.setCeiling(0xf3,ceilBuffers[currentPrio][8],ceilBuffers[currentPrio][9],ceilBuffers[currentPrio][10],ceilBuffers[currentPrio][11]);
+				wall.setCeiling(0xf4,ceilBuffers[currentPrio][12],ceilBuffers[currentPrio][13],ceilBuffers[currentPrio][14],ceilBuffers[currentPrio][15]);
+				wall.setCeiling(0xf5,ceilBuffers[currentPrio][16],ceilBuffers[currentPrio][17],ceilBuffers[currentPrio][18],ceilBuffers[currentPrio][19]);
+			}
+			else
+			{
+				wall.setFrame(displayBuffers[currentPrio]);
+			}
 		}
 
 
@@ -277,7 +288,7 @@ exports.newWall = function(wallType,wall) {
 
 
 					if(x == 0xf0){
-						ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
+						ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
 					}else{
 						ceilBuffers[myPrio][(x-0xf1)*4] = y;
 						ceilBuffers[myPrio][(x-0xf1)*4+1] = r;
