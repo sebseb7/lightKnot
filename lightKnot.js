@@ -7,6 +7,23 @@
 
 	});
 */
+//	wallType = process.argv[2];
+
+/*	if(!wallType || wallType == undefined){
+		//on ernie we default to g3d2
+		if(os.hostname() == 'ernie'){
+			wallType='g3d2';
+		}
+		//on bender we default to PentawallHD
+		if(os.hostname() == 'bender'){
+			wallType='PentawallHD';
+		}
+		//on elmo we default to pentawall
+		if(os.hostname() == 'elmo'){
+			wallType='Pentawall';
+		}
+	}
+*/
 var wall = require('./wall.js');
 var wallConn = require('./wallConnection.js');
 var serialDevice = '/dev/cu.usbserial-AE018X8S';
