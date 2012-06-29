@@ -1,4 +1,4 @@
-var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
+var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud and errno reporting on write
 
 
 var ledWallConnection;
