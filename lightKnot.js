@@ -1,12 +1,12 @@
 #!/usr/local/bin/node
 
-	process.on('uncaughtException', function (err) {
+/*	process.on('uncaughtException', function (err) {
 
 		console.log('uncaught exception: '+ err)
 		console.log(err.trace());
 
 	});
-
+*/
 var wall = require('./wall.js');
 var wallConn = require('./wallConnection.js');
 
@@ -21,7 +21,7 @@ var wallConn = require('./wallConnection.js');
 		console.log("running "+configuration.name+" without hardware on port "+configuration.tcpPort);
 	}*/
 
-wallConn.init(true,'/dev/cu.usbserial-AE018X8S',500000);
+wallConn.init(false,'/dev/cu.usbserial-AE018X8S',500000);
 
 var pentawallHD = wall.newWall('PentawallHD',wallConn);
 var ceilingLED = wall.newWall('CeilingLED',wallConn);

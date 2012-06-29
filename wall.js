@@ -489,7 +489,7 @@ exports.newWall = function(wallType,wall) {
 
 
 	var connectionIdCtr = 0;
-	configuration.server = net.createServer(function (socket) {
+	server = net.createServer(function (socket) {
 		socket.setNoDelay(true);
 		socket.write('00welcome to '+configuration.name+' (00+<enter> for help)'+nnl);
 
@@ -540,19 +540,19 @@ exports.newWall = function(wallType,wall) {
 
 	});
 
-	configuration.server.on('connection', function (e) {
+	server.on('connection', function (e) {
 		if (e.code == 'EADDRINUSE') {
 			console.log('Address in use, retrying...');
 			
 			setTimeout(function () {
-				configuration.server.close();
+				server.close();
 				conviguration.server.listen(configuration.tcpPort, '::');
 			}, 1000);
 		}
 	});
 
 
-	configuration.server.listen(configuration.tcpPort, '::');
+	server.listen(configuration.tcpPort, '::');
 	console.log('setup done'+configuration.tcpPort);
 
 	var ioSockets = {};
@@ -677,9 +677,9 @@ exports.newWall = function(wallType,wall) {
 
 
 	setInterval(pushFrames,60);
-	if(configuration.height==1){
+//	if(configuration.height==1){
 		setInterval(pushCeil,10);
-	}
+//	}
 
 
 	console.log('setup done');
