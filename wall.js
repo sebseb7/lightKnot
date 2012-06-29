@@ -553,7 +553,6 @@ exports.newWall = function(wallType,wall) {
 
 
 	server.listen(configuration.tcpPort, '::');
-	console.log('setup done'+configuration.tcpPort);
 
 	var ioSockets = {};
 	var ioSocketIdCtr = 0;
@@ -678,10 +677,9 @@ exports.newWall = function(wallType,wall) {
 
 	setInterval(pushFrames,60);
 //	if(configuration.height==1){
-		setInterval(pushCeil,10);
+//		setInterval(pushCeil,10);
 //	}
 
 
-	console.log('setup done');
 	return configuration;
 };

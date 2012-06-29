@@ -9,19 +9,19 @@
 */
 var wall = require('./wall.js');
 var wallConn = require('./wallConnection.js');
-
+var serialDevice = '/dev/cu.usbserial-AE018X8S';
 	
-	/*var hardwareAvailable = true;
+var hardwareAvailable = true;
 
-	try{
-		var stats = fs.statSync(configuration.serialDevice);
-		console.log("running "+configuration.name+" with hardware on port "+configuration.tcpPort);
-	} catch(e) {
-		hardwareAvailable = false;
-		console.log("running "+configuration.name+" without hardware on port "+configuration.tcpPort);
-	}*/
+try{
+	var stats = fs.statSync(serialDevice);
+	console.log("running with hardware");
+} catch(e) {
+	hardwareAvailable = false;
+	console.log("running without hardware");
+}
 
-wallConn.init(false,'/dev/cu.usbserial-AE018X8S',500000);
+wallConn.init(false,serialDevice,500000);
 
 var pentawallHD = wall.newWall('PentawallHD',wallConn);
 var ceilingLED = wall.newWall('CeilingLED',wallConn);
