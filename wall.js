@@ -5,6 +5,8 @@ var os = require('os');
 
 
 var nnl = '\r\n'; //network new line
+var currentRecFd;
+var currentRecStarted;
 
 
 exports.newWall = function(wallType,wall) {
@@ -13,11 +15,10 @@ exports.newWall = function(wallType,wall) {
 	var configuration;
 
 
-	var currentRecFd;
-	var currentRecStarted;
 	var lastFrame;
 	var lastCeilFrame;
 
+	var homedir = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
 
 	if(wallType == 'g3d2') {
 
@@ -29,7 +30,7 @@ exports.newWall = function(wallType,wall) {
 			subpixel           : 1,
 			subpixelOrder      : 'g',
 			name               : 'g3d2',
-			recordingPath      : '/opt/wallRecords_g3d2/rec',
+			recordingPath      : '/opt/wallRecords_g3d2/',
 		};
 
 	}else if(wallType == 'Pentawall') {
@@ -42,7 +43,7 @@ exports.newWall = function(wallType,wall) {
 			subpixel           : 3,
 			subpixelOrder      : 'rrggbb',
 			name               : 'Pentawall',
-			recordingPath      : '/opt/idleloop/rec',
+			recordingPath      : '/opt/idleloop/',
 		};
 
 	}else if(wallType == 'PentawallHD') {
@@ -55,7 +56,7 @@ exports.newWall = function(wallType,wall) {
 			subpixel           : 3,
 			subpixelOrder      : 'rrggbb',
 			name               : 'PentawallHD',
-			recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
+			recordingPath      : homedir+'/Sites/wallRecords/',
 		};
 
 	}else if(wallType == 'CeilingLED') {
@@ -68,7 +69,7 @@ exports.newWall = function(wallType,wall) {
 			subpixel           : 3,
 			subpixelOrder      : 'rrggbbww',
 			name               : 'CeilingLED',
-			recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
+			recordingPath      : homedir+'/Sites/wallRecords/',
 		};
 
 	}
@@ -387,7 +388,10 @@ exports.newWall = function(wallType,wall) {
 				// start recodring
 
 
-				fs.open(configuration.recordingPath+Date.now()+'.rec','a',0666,function(err,fd) {
+				var filename = data.substr(2,data.length-2);
+				
+				fs.open(configuration.recordingPath+filename+'.rec','a',0666,function(err,fd) {
+				//fs.open(configuration.recordingPath+Date.now()+'.rec','a',0666,function(err,fd) {
 
 					console.log('start rec '+err);
 

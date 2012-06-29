@@ -1,12 +1,14 @@
 #!/usr/local/bin/node
 
-/*	process.on('uncaughtException', function (err) {
+var fs = require('fs');
+
+process.on('uncaughtException', function (err) {
 
 		console.log('uncaught exception: '+ err)
-		console.log(err.trace());
+//		console.log(err.trace());
 
 	});
-*/
+
 //	wallType = process.argv[2];
 
 /*	if(!wallType || wallType == undefined){
@@ -31,14 +33,14 @@ var serialDevice = '/dev/cu.usbserial-AE018X8S';
 var hardwareAvailable = true;
 
 try{
-	var stats = fs.statSync(serialDevice);
+	var stats = fs.lstatSync(serialDevice);
 	console.log("running with hardware");
 } catch(e) {
 	hardwareAvailable = false;
 	console.log("running without hardware");
 }
 
-wallConn.init(false,serialDevice,500000);
+wallConn.init(hardwareAvailable,serialDevice,500000);
 
 var pentawallHD = wall.newWall('PentawallHD',wallConn);
 var ceilingLED = wall.newWall('CeilingLED',wallConn);
