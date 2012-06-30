@@ -9,6 +9,7 @@ also prodvides a preview website, like this one : http://bender.hq.c3d2.de:2340 
 * original Pentawall (16x15x3x8)
 * g3d2 (72x32x1x4)
 * PentawallHD (23x23x3x8)
+* CeilingLED (5x1x4x8)
 
 ## Dependencies
 
@@ -17,7 +18,7 @@ also prodvides a preview website, like this one : http://bender.hq.c3d2.de:2340 
 
 ## Configuration
 
-* very simple, look into `lightKnow.js`
+* very simple, look into `wall.js`
 
 ## Protocol
 
