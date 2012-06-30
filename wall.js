@@ -46,7 +46,7 @@ exports.newWall = function(wallType,wall) {
 			subpixel           : 1,
 			subpixelOrder      : 'g',
 			name               : 'g3d2',
-			recordingPath      : '/opt/wallRecords_g3d2/rec',
+			recordingPath      : '/Users/seb/Sites/wallRecords_g3d2/',
 		};
 
 	}else if(wallType == 'Pentawall') {
@@ -408,8 +408,11 @@ exports.newWall = function(wallType,wall) {
 
 					console.log('start rec '+err);
 
-					currentRecFd = fd;
-					currentRecStarted = null;
+					if(err === null)
+					{
+						currentRecFd = fd;
+						currentRecStarted = null;
+					}
 
 				
 				});
@@ -418,11 +421,18 @@ exports.newWall = function(wallType,wall) {
 
 			case 6:
 				// stop recording
-				
-				fs.close(currentRecFd,function() { console.log('recording done') });
-				currentRecFd = null;
-				currentRecStarted = null;
-				return 'ok';
+					
+				if((currentRecFd)&&(currentRecFd !== null))
+				{
+					fs.close(currentRecFd,function() { console.log('recording done') });
+					currentRecFd = null;
+					currentRecStarted = null;
+					return 'ok';
+				}
+				else
+				{
+					return 'bad'; 
+				}
 
 			case 9:
 				// subscribe to message channel
