@@ -43,7 +43,7 @@ var wallConn = require('./wallConnection.js');
 
 	wallConn.init(hardwareAvailable,serialDevice,500000);
 
-	var ceilingLED = wall.newWall('g3d2',wallConn);
+	var g3d2 = wall.newWall('g3d2',wallConn);
 }
 
 
