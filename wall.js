@@ -73,7 +73,6 @@ exports.newWall = function(wallType,wall) {
 
 	}
 
-	console.log('a'+wall);
 	if(wall === null)
 	{
 		configuration.hardware = 0;
