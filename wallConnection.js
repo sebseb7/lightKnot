@@ -70,6 +70,11 @@ exports.init = function(realHardwareAvailable,device,baudrate) {
 			}
 
 		};
+		return ledWallConnection;
+	}
+	else
+	{
+		return null;
 	}
 
 }

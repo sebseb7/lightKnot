@@ -18,7 +18,7 @@ exports.newWall = function(wallType,wall) {
 	var lastFrame;
 	var lastCeilFrame;
 
-
+	
 	if(wallType == 'g3d2') {
 
 		configuration = {
@@ -73,6 +73,14 @@ exports.newWall = function(wallType,wall) {
 
 	}
 
+	console.log('a'+wall);
+	if(wall === null)
+	{
+		configuration.hardware = 0;
+	}
+	{
+		configuration.hardware = 1;
+	}
 
 	console.log('Starting Server for '+configuration.name+' on port '+configuration.tcpPort);
 
@@ -148,7 +156,8 @@ exports.newWall = function(wallType,wall) {
 						'subpixel='+configuration.subpixel+nnl+
 						'bpp='+configuration.bpp+nnl+
 						'name='+configuration.name+nnl+
-						'subpixelOrder='+configuration.subpixelOrder+nnl;
+						'subpixelOrder='+configuration.subpixelOrder+nnl+
+						'hardwareAvailable='+configuration.hardware+nnl;
 			case 2:
 			
 				var x = parseInt(data.substr(2,2),16);
