@@ -4,7 +4,7 @@
 var io = require('socket.io-client');
 var SDL = require( 'sdl' );
 
-var socket = io.connect('http://bender.hq.c3d2.de:2339');
+var socket = io.connect('http://localhost:2350');
 
 socket.on('disconnect', function () {
 
