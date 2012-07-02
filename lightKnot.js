@@ -23,10 +23,10 @@ var wallConn = require('./wallConnection.js');
 		console.log("running without hardware");
 	}
 
-	wallConn.init(hardwareAvailable,serialDevice,500000);
+	var connectionCeil = wallConn.newConn(hardwareAvailable,serialDevice,500000);
 
-	var pentawallHD = wall.newWall('PentawallHD',wallConn);
-	var ceilingLED = wall.newWall('CeilingLED',wallConn);
+	var pentawallHD = wall.newWall('PentawallHD',connectionCeil);
+	var ceilingLED = wall.newWall('CeilingLED',connectionCeil);
 }
 {
 	var serialDevice = '/dev/cu.usbserial-A100DDXG';
@@ -41,9 +41,9 @@ var wallConn = require('./wallConnection.js');
 		console.log("running without hardware");
 	}
 
-	wallConn.init(hardwareAvailable,serialDevice,500000);
+	var g3d2Conn = wallConn.newConn(hardwareAvailable,serialDevice,500000);
 
-	var g3d2 = wall.newWall('g3d2',wallConn);
+	var g3d2 = wall.newWall('g3d2',g3d2Conn);
 }
 
 
