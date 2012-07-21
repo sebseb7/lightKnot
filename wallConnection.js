@@ -146,7 +146,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		var buf = new Buffer([x+1,y+1,r,g,b]);
 
 		if(ledWallConnection){
-			ledWallConnection.write(concatBuffers(magic_42,escapeData(buf)));
+			ledWallConnection.write(magic_42.concat(escapeData(buf)));
 		}
 	}
 
@@ -155,7 +155,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		var buf = new Buffer([x+1,y+1,g]);
 
 		if(ledWallConnection){
-			ledWallConnection.write(concatBuffers(magic_42,escapeData(buf)));
+			ledWallConnection.write(magic_42.concat(escapeData(buf)));
 		}
 
 	}
@@ -165,7 +165,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		var buf = new Buffer([x,r,g,b,w]);
 
 		if(ledWallConnection){
-			ledWallConnection.write(concatBuffers(magic_42,escapeData(buf)));
+			ledWallConnection.write(magic_42.concat(escapeData(buf)));
 		}
 
 	}
@@ -174,36 +174,11 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 	wallConn.setFrame = function(buf) {
 
 		if(ledWallConnection){
-			ledWallConnection.write(concatBuffers(magic_23,escapeData(buf)));
+			ledWallConnection.write(magic_23.concat(escapeData(buf)));
 		}
 
 	}
 
-
-	function concatBuffers(bufs) {
-		if (!Array.isArray(bufs)) {
-			bufs = Array.prototype.slice.call(arguments);
-		}
-
-		var bufsToConcat = [], length = 0;
-		bufs.forEach(function (buf) {
-			if (buf) {
-				if (!Buffer.isBuffer(buf)) {
-					buf = new Buffer(buf);
-				}
-				length += buf.length;
-				bufsToConcat.push(buf);
-			}
-		});
-
-		var concatBuf = new Buffer(length), index = 0;
-		bufsToConcat.forEach(function (buf) {
-			buf.copy(concatBuf, index, 0, buf.length);
-			index += buf.length;
-		});
-
-		return concatBuf;
-	}
 
 	return wallConn;
 }

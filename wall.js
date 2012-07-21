@@ -2,6 +2,7 @@ var net = require('net');
 var fs = require('fs');
 var util = require("util");
 var os = require('os');
+require('buffertools');
 
 
 var nnl = '\r\n'; //network new line
@@ -134,9 +135,9 @@ exports.newWall = function(wallType,wall) {
 
 	function processPacket(data,connectionId)
 	{
-
 		var myPrio = openConnections[connectionId].priorityLevel;
 
+	
 		switch(parseInt(data.substr(0,2),16))
 		{
 			case 0:
@@ -315,28 +316,43 @@ exports.newWall = function(wallType,wall) {
 
 			case 3:
 				
+				
 				var strFrame = data.substr(2,frameSize);
 		
 				if(strFrame.length != frameSize){
 					return 'bad';
 				}
+
 		
 
 				var buf;
 
 				if(configuration.subpixel == 3){
 
-					buf = new Buffer(strFrame.length/2);
+					var buf2 = new Buffer(strFrame);
+				
+					try
+					{
+						buf = buf2.fromHex();
+					}catch(e)
+					{
+						console.log(strFrame);
+						return 'bad';
+					}
+
+					/*buf = new Buffer(strFrame.length/2);
 		
 					for(var a = 0; a < strFrame.length/2;a++){
 						buf[a] = parseInt(strFrame.substr(a*2,2),16);
 						if(isNaN(buf[a]))	{
 							return 'bad';
 						}
-					}
+					}*/
 
 				}else{
 
+					//var buf2 = new Buffer(strFrame);
+					//buf = buf2.fromHalfHex();
 					buf = new Buffer(strFrame.length/2);
 		
 					for(var a = 0; a < strFrame.length/2;a++){
@@ -350,7 +366,6 @@ exports.newWall = function(wallType,wall) {
 					}
 
 				}
-
 
 
 				displayBuffers[myPrio] = buf;
