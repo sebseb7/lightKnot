@@ -330,7 +330,16 @@ exports.newWall = function(wallType,wall) {
 				if(configuration.subpixel == 3){
 
 					var buf2 = new Buffer(strFrame);
-					buf = buf2.fromHex();
+				
+					try
+					{
+						buf = buf2.fromHex();
+					}catch(e)
+					{
+						console.log(strFrame);
+						return 'bad';
+					}
+
 					/*buf = new Buffer(strFrame.length/2);
 		
 					for(var a = 0; a < strFrame.length/2;a++){
