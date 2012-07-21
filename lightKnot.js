@@ -15,6 +15,7 @@ var wallConn = require('./wallConnection.js');
 		
 	var hardwareAvailable = true;
 
+
 	try{
 		var stats = fs.lstatSync(serialDevice);
 		console.log("running with hardware");
@@ -29,7 +30,7 @@ var wallConn = require('./wallConnection.js');
 	var ceilingLED = wall.newWall('CeilingLED',connectionCeil);
 }
 {
-	var serialDevice = '/dev/cu.usbserial-A100DDXG';
+	var serialDevice = '/dev/cu.usbserial-A100DDXG5';
 		
 	var hardwareAvailable = true;
 
