@@ -1,5 +1,4 @@
 #!/usr/local/bin/node
-require('pentawalltools');
 
 	process.on('uncaughtException', function (err) {
 

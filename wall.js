@@ -3,6 +3,7 @@ var fs = require('fs');
 var util = require("util");
 var os = require('os');
 require('buffertools');
+require('pentawalltools');
 
 
 var nnl = '\r\n'; //network new line
@@ -327,7 +328,7 @@ exports.newWall = function(wallType,wall) {
 
 				var buf;
 
-				if(configuration.subpixel == 3){
+				if(configuration.subpixel != 1){
 
 					var buf2 = new Buffer(strFrame);
 				
@@ -340,31 +341,18 @@ exports.newWall = function(wallType,wall) {
 						return 'bad';
 					}
 
-					/*buf = new Buffer(strFrame.length/2);
-		
-					for(var a = 0; a < strFrame.length/2;a++){
-						buf[a] = parseInt(strFrame.substr(a*2,2),16);
-						if(isNaN(buf[a]))	{
-							return 'bad';
-						}
-					}*/
-
 				}else{
 
-					//var buf2 = new Buffer(strFrame);
-					//buf = buf2.fromHalfHex();
-					buf = new Buffer(strFrame.length/2);
-		
-					for(var a = 0; a < strFrame.length/2;a++){
-						buf[a] = 
-							parseInt(strFrame.substr(a*2,1),16) +
-							parseInt(strFrame.substr(a*2+1,1),16)*0x10
-						;
-						if(isNaN(buf[a]))	{
-							return 'bad';
-						}
+					var buf2 = new Buffer(strFrame);
+				
+					try
+					{
+						buf = buf2.fromG3d2Encoding();
+					}catch(e)
+					{
+						console.log(strFrame);
+						return 'bad';
 					}
-
 				}
 
 
