@@ -67,7 +67,7 @@ exports.newWall = function(wallType,wall) {
 			width              : 5,
 			height             : 1,
 			bpp                : 8,
-			subpixel           : 3,
+			subpixel           : 4,
 			subpixelOrder      : 'rrggbbww',
 			name               : 'CeilingLED',
 			recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
@@ -167,7 +167,7 @@ exports.newWall = function(wallType,wall) {
 				var g;
 				var b;
 
-				if(configuration.subpixel == 3){
+				if((configuration.subpixel == 3)||(configuration.subpixel == 4)){
 					r = parseInt(data.substr(6,2),16);
 					g = parseInt(data.substr(8,2),16);
 					b = parseInt(data.substr(10,2),16);
@@ -230,13 +230,13 @@ exports.newWall = function(wallType,wall) {
 					}
 					lastFrame = null;
 
-				}else if ((x < configuration.width)&&(y < configuration.height)){
+				}else if ((configuration.height != 1)&&(x < configuration.width)&&(y < configuration.height)){
 		
 					if(configuration.subpixel == 3){
 						displayBuffers[myPrio][(y*configuration.width+x)*3] = r;
 						displayBuffers[myPrio][(y*configuration.width+x)*3+1] = g;
 						displayBuffers[myPrio][(y*configuration.width+x)*3+2] = b;
-					}else{
+					}else if (configuration.subpixel == 1){
 
 						var xModulo = x % 2;
 						var pixelIdx  = y*(configuration.width/2)+((x-xModulo)/2);
