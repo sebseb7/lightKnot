@@ -1,4 +1,4 @@
-var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
+var serialPort = require('serialport_sebseb7').SerialPort; //needs patch for 500000 baud
 
 
 
@@ -38,13 +38,69 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		ledWallConnection.realWrite = ledWallConnection.write;
 
-		ledWallConnection.write = function(buf) {
 
-			var bytes_send;
+		var conn_buffer = new Array();
+		var write_busy = 0;
 
-			try {
-				bytes_send = ledWallConnection.realWrite(buf);
-			} catch(e) {
+
+		ledWallConnection.checkBuffer = function() {
+
+			if(conn_buffer.length != 0)
+			{
+				
+				var buf = conn_buffer.shift();
+				
+				write_busy = 1;
+				
+				ledWallConnection.realWrite(buf.data, function(err,result) {
+					write_busy = 0;
+					if(buf.sock && (conn_buffer.length < 10))
+					{
+						buf.sock.resume();
+					}
+					if(buf.cb){
+						buf.cb('ok',conn_buffer.length);
+					};
+					ledWallConnection.checkBuffer();
+				});
+
+			}
+
+
+		}
+
+
+
+		ledWallConnection.write = function(buf,callback,socket) {
+		
+			if(socket && (conn_buffer.length > 20))
+			{
+				socket.pause();
+			}
+
+
+			if(write_busy == 1)
+			{
+				conn_buffer.push({data:buf,cb:callback,sock:socket});
+			}
+			else
+			{
+				write_busy = 1;
+				
+				ledWallConnection.realWrite(buf, function(err,result) {
+					write_busy = 0;
+					if(socket && (conn_buffer.length < 10))
+					{
+						socket.resume();
+					}
+					if(callback){
+						callback('ok');
+					};
+					ledWallConnection.checkBuffer();
+				});
+
+			};
+			/*} catch(e) {
 				console.log('serial device error 2');
 				console.log(e);
 				try {
@@ -70,7 +126,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 				}
 				ledWallConnection = null;
 				setTimeout(function() {exports.init(true,device,baudrate)},5000);
-			}
+			}*/
 
 		};
 	}
@@ -119,62 +175,62 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 	var magic_42 = new Buffer([0x42]);
 	var magic_23 = new Buffer([0x23]);
 
-	wallConn.setAllPixel3 = function(r,g,b) {
+	wallConn.setAllPixel3 = function(r,g,callback,socket) {
 
 		var buf = new Buffer([0,0,r,g,b]);
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42);
-			ledWallConnection.write(escapeData(buf));
+			ledWallConnection.write(escapeData(buf),callback,socket);
 		}
 
 	}
 
-	wallConn.setAllPixel = function(g) {
+	wallConn.setAllPixel = function(g,callback,socket) {
 
 		var buf = new Buffer([0,0,g]);
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42);
-			ledWallConnection.write(escapeData(buf));
+			ledWallConnection.write(escapeData(buf),callback,socket);
 		}
 
 	}
 
 
-	wallConn.setPixel3 = function(x,y,r,g,b) {
+	wallConn.setPixel3 = function(x,y,r,g,b,callback,socket) {
 		var buf = new Buffer([x+1,y+1,r,g,b]);
 
 		if(ledWallConnection){
-			ledWallConnection.write(magic_42.concat(escapeData(buf)));
+			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
 		}
 	}
 
-	wallConn.setPixel = function(x,y,g) {
+	wallConn.setPixel = function(x,y,g,callback,socket) {
 
 		var buf = new Buffer([x+1,y+1,g]);
 
 		if(ledWallConnection){
-			ledWallConnection.write(magic_42.concat(escapeData(buf)));
+			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
 		}
 
 	}
 
-	wallConn.setCeiling = function(x,r,g,b,w) {
+	wallConn.setCeiling = function(x,r,g,b,w,callback,socket) {
 
 		var buf = new Buffer([x,r,g,b,w]);
 
 		if(ledWallConnection){
-			ledWallConnection.write(magic_42.concat(escapeData(buf)));
+			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
 		}
 
 	}
 
 
-	wallConn.setFrame = function(buf) {
+	wallConn.setFrame = function(buf,callback,socket) {
 
 		if(ledWallConnection){
-			ledWallConnection.write(magic_23.concat(escapeData(buf)));
+			ledWallConnection.write(magic_23.concat(escapeData(buf)),callback,socket);
 		}
 
 	}

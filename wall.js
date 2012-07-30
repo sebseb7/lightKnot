@@ -30,6 +30,7 @@ exports.newWall = function(wallType,wall) {
 			bpp                : 4,
 			subpixel           : 1,
 			subpixelOrder      : 'g',
+			alphapixel		   : 'a',
 			name               : 'g3d2',
 			recordingPath      : '/Users/seb/Sites/wallRecords_g3d2/',
 		};
@@ -43,6 +44,7 @@ exports.newWall = function(wallType,wall) {
 			bpp                : 8,
 			subpixel           : 3,
 			subpixelOrder      : 'rrggbb',
+			alphapixel		   : 'aa',
 			name               : 'Pentawall',
 			recordingPath      : '/opt/idleloop/rec',
 		};
@@ -56,6 +58,7 @@ exports.newWall = function(wallType,wall) {
 			bpp                : 8,
 			subpixel           : 3,
 			subpixelOrder      : 'rrggbb',
+			alphapixel		   : 'aa',
 			name               : 'PentawallHD',
 			recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
 		};
@@ -91,6 +94,7 @@ exports.newWall = function(wallType,wall) {
 
 	var pixelSize = configuration.bpp / 4;
 	var frameSize = configuration.width*configuration.height*configuration.subpixel*pixelSize;
+	var frameSizeAlpha = configuration.width*configuration.height*(configuration.subpixel+1)*pixelSize;
 
 	var currentPrio = 0;
 
@@ -134,7 +138,7 @@ exports.newWall = function(wallType,wall) {
 
 	}
 
-	function processPacket(data,connectionId)
+	function processPacket(data,connectionId,callback,socket)
 	{
 		var myPrio = openConnections[connectionId].priorityLevel;
 
@@ -142,23 +146,24 @@ exports.newWall = function(wallType,wall) {
 		switch(parseInt(data.substr(0,2),16))
 		{
 			case 0:
-				return 'help:'+nnl+nnl+
+				return callback('help:'+nnl+nnl+
 				'00 help'+nnl+nnl+
 				'01 show configuration'+nnl+nnl+
 				'02xxyy'+configuration.subpixelOrder+' set Pixel'+nnl+
 				'   * xxyy == FFFF : set all pixel'+nnl+nnl+
 				((configuration.height==1) ? '02xxrrggbbww set CeilingLED '+nnl+'   * xx   == F1..F4 ; F0 (all) '+nnl+nnl:'')+
 				'03'+configuration.subpixelOrder+'..'+configuration.subpixelOrder+' set all '+(configuration.width*configuration.height)+' pixel'+nnl+nnl+
-				'04ll set priority level 00..04 , currentLevel: '+myPrio+nnl;
+				'03'+configuration.subpixelOrder+configuration.alphapixel+'..'+configuration.subpixelOrder+configuration.alphapixel+' set all '+(configuration.width*configuration.height)+' pixel with alpha blending'+nnl+nnl+
+				'04ll set priority level 00..04 , currentLevel: '+myPrio+nnl);
 
 			case 1:
-				return  'width='+configuration.width+nnl+
+				return  callback('width='+configuration.width+nnl+
 						'height='+configuration.height+nnl+
 						'subpixel='+configuration.subpixel+nnl+
 						'bpp='+configuration.bpp+nnl+
 						'name='+configuration.name+nnl+
 						'subpixelOrder='+configuration.subpixelOrder+nnl+
-						'hardwareAvailable='+configuration.hardware+nnl;
+						'hardwareAvailable='+configuration.hardware+nnl);
 			case 2:
 			
 				var x = parseInt(data.substr(2,2),16);
@@ -172,12 +177,12 @@ exports.newWall = function(wallType,wall) {
 					g = parseInt(data.substr(8,2),16);
 					b = parseInt(data.substr(10,2),16);
 					if(isNaN(x)||isNaN(y)||isNaN(r)||isNaN(g)||isNaN(b)){
-						return 'bad';
+						return callback('bad');
 					}
 				}else{
 					g = parseInt(data.substr(6,1),16);
 					if(isNaN(x)||isNaN(y)||isNaN(g)){
-						return 'bad';
+						return callback('bad');
 					}
 				}
 
@@ -199,9 +204,9 @@ exports.newWall = function(wallType,wall) {
 					if(myPrio >= currentPrio){
 
 						if(configuration.subpixel == 3){
-							wall.setAllPixel3(r,g,b);
+							wall.setAllPixel3(r,g,b),callback,socket;
 						}else{
-							wall.setAllPixel(g);
+							wall.setAllPixel(g,callback,socket);
 						}
 						
 						if(currentRecFd){
@@ -218,6 +223,9 @@ exports.newWall = function(wallType,wall) {
 							fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
 							fs.writeSync(currentRecFd,"\r\n",null);
 						}
+						return;
+					}else{
+						return callback('ok');
 					}
 				
 
@@ -255,9 +263,9 @@ exports.newWall = function(wallType,wall) {
 					if(myPrio >= currentPrio){
 
 						if(configuration.subpixel == 3){
-							wall.setPixel3(x,y,r,g,b);
+							wall.setPixel3(x,y,r,g,b,callback,socket);
 						}else{
-							wall.setPixel(x,y,g);
+							wall.setPixel(x,y,g,callback,socket);
 						}
 						
 						if(currentRecFd){
@@ -274,7 +282,11 @@ exports.newWall = function(wallType,wall) {
 							fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
 							fs.writeSync(currentRecFd,"\r\n",null);
 						}
+						return;
+					}else{
+						return callback('ok');
 					}
+					
 
 				
 				}else if ((x <= 0xf5)&&(x >= 0xf0)&&(configuration.height==1)){
@@ -292,7 +304,7 @@ exports.newWall = function(wallType,wall) {
 					lastCeilFrame = null;
 		
 					if(myPrio >= currentPrio){
-						wall.setCeiling(x,y,r,g,b);
+						wall.setCeiling(x,y,r,g,b,callback,socket);
 						if(currentRecFd){
 							
 							var buf = new Buffer([x,y,r,g,b]);
@@ -307,92 +319,160 @@ exports.newWall = function(wallType,wall) {
 							fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
 							fs.writeSync(currentRecFd,"\r\n",null);
 						}
+						return;
+					}else{
+						return callback('ok');
 					}
 				
 				}else{
-					return 'bad'
+					return callback('bad')
 				}
 
-				return 'ok';
 
 			case 3:
-				
-				
-				var strFrame = data.substr(2,frameSize);
 		
-				if(strFrame.length != frameSize){
-					return 'bad';
-				}
+				if(data.length == frameSize+2)
+				{
+					var strFrame = data.substr(2,frameSize);
+					var buf;
 
-		
+					if(configuration.subpixel != 1){
 
-				var buf;
-
-				if(configuration.subpixel != 1){
-
-					var buf2 = new Buffer(strFrame);
-				
-					try
-					{
-						buf = buf2.fromHex();
-					}catch(e)
-					{
-						console.log(strFrame);
-						return 'bad';
-					}
-
-				}else{
-
-					var buf2 = new Buffer(strFrame);
-				
-					try
-					{
-						buf = buf2.fromG3d2Encoding();
-					}catch(e)
-					{
-						console.log(strFrame);
-						return 'bad';
-					}
-				}
-
-
-				displayBuffers[myPrio] = buf;
-
-
-
-				if(myPrio >= currentPrio){
-					wall.setFrame(buf);
-					if(currentRecFd){
-						
-						var strBuf = new Buffer(strFrame);
-						
-						if(currentRecStarted == null){
-							currentRecStarted = Date.now();
-						};
+						var buf2 = new Buffer(strFrame);
 					
-						fs.writeSync(currentRecFd,parseInt(Date.now()-currentRecStarted,10)+" 03",null);
-						
-						fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
-						fs.writeSync(currentRecFd,"\r\n",null);
+						try
+						{
+							buf = buf2.fromHex();
+						}catch(e)
+						{
+							console.log(strFrame);
+							return callback('bad');
+						}
+
+					}else{
+
+						var buf2 = new Buffer(strFrame);
+					
+						try
+						{
+							buf = buf2.fromG3d2Encoding();
+						}catch(e)
+						{
+							console.log(strFrame);
+							return callback('bad');
+						}
 					}
 
+
+					displayBuffers[myPrio] = buf;
+
+
+
+					if(myPrio >= currentPrio){
+						wall.setFrame(buf,callback,socket);
+						if(currentRecFd){
+							
+							var strBuf = new Buffer(strFrame);
+							
+							if(currentRecStarted == null){
+								currentRecStarted = Date.now();
+							};
+						
+							fs.writeSync(currentRecFd,parseInt(Date.now()-currentRecStarted,10)+" 03",null);
+							
+							fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
+							fs.writeSync(currentRecFd,"\r\n",null);
+						}
+						return;
+					}else{
+						return callback('ok');
+					}
+				
+				
+				}else if(data.length == frameSizeAlpha+2)
+				{
+					var strFrame = data.substr(2,frameSizeAlpha);
+					var buf;
+
+					if(configuration.subpixel != 1){
+
+						var buf2 = new Buffer(strFrame);
+					
+						try
+						{
+							buf = buf2.fromHex();
+						}catch(e)
+						{
+							console.log(strFrame);
+							return callback('bad');
+						}
+
+					}else{
+
+						var buf2 = new Buffer(strFrame);
+					
+						try
+						{
+							if(myPrio > 0)
+							{
+								//console.log(displayBuffers[myPrio-1]);
+								buf = buf2.fromG3d2EncodingWithAlpha(displayBuffers[myPrio-1]);
+							}else{
+								buf = buf2.fromG3d2EncodingWithAlpha(null);
+							}
+							
+
+						}catch(e)
+						{
+							console.log(strFrame);
+							return callback('bad');
+						}
+					}
+
+
+					displayBuffers[myPrio] = buf;
+
+
+
+					if(myPrio >= currentPrio){
+						wall.setFrame(buf,callback,socket);
+						if(currentRecFd){
+							
+							var strBuf = new Buffer(strFrame);
+							
+							if(currentRecStarted == null){
+								currentRecStarted = Date.now();
+							};
+						
+							fs.writeSync(currentRecFd,parseInt(Date.now()-currentRecStarted,10)+" 03",null);
+							
+							fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
+							fs.writeSync(currentRecFd,"\r\n",null);
+						}
+						return;
+					}else{
+						return callback('ok');
+					}
+				
+				
+				}else{
+					return callback('bad');
 				}
-		
-				return 'ok';
+
 			
 			case 4:
 					
 				var targetPrio = parseInt(data.substr(2,2),16);
 
 				if(isNaN(targetPrio) || (targetPrio > 4)){
-					return 'bad';
+					return callback('bad');
 				}
 
 				openConnections[connectionId].priorityLevel = targetPrio;
 
 				updateCurrentPrio();
 
-				return 'ok';
+				return callback('ok');
 			
 			case 5:
 				// start recodring
@@ -411,7 +491,7 @@ exports.newWall = function(wallType,wall) {
 				
 				});
 
-				return 'ok';
+				return callback('ok');
 
 			case 6:
 				// stop recording
@@ -421,11 +501,11 @@ exports.newWall = function(wallType,wall) {
 					fs.close(currentRecFd,function() { console.log('recording done') });
 					currentRecFd = null;
 					currentRecStarted = null;
-					return 'ok';
+					return callback('ok');
 				}
 				else
 				{
-					return 'bad'; 
+					return callback('bad'); 
 				}
 
 			case 9:
@@ -434,29 +514,29 @@ exports.newWall = function(wallType,wall) {
 				var cmd = parseInt(data.substr(4,2),16);
 
 				if(isNaN(chan)){
-					return 'bad';
+					return callback('bad');
 				}
 
 				if(cmd == 1)
 				{
 					openConnections[connectionId].messageChannelSubscription[chan] = true;
-					return 'ok';
+					return callback('ok');
 				}
 				if(cmd == 0)
 				{
 					if(openConnections[connectionId].messageChannelSubscription[chan])
 					{
 						delete openConnections[connectionId].messageChannelSubscription[chan];
-						return 'ok';
+						return callback('ok');
 					}
-					return 'bad';
+					return callback('bad');
 				}
-				return 'bad';
+				return callback('bad');
 
 			case 11:
 
 
-				return 'ioSocket:'+util.inspect(ioSockets,false,1)+'\r\n\r\nopenConnections:'+util.inspect(openConnections, false, 1)+'\r\n\r\ncurrentPrio:'+currentPrio;
+				return callback('ioSocket:'+util.inspect(ioSockets,false,1)+'\r\n\r\nopenConnections:'+util.inspect(openConnections, false, 1)+'\r\n\r\ncurrentPrio:'+currentPrio);
 			
 			case 10:
 				// push message
@@ -465,7 +545,7 @@ exports.newWall = function(wallType,wall) {
 				var strData = data.substr(4,data.length-4);
 		
 				if(isNaN(chan)){
-					return 'bad';
+					return callback('bad');
 				}
 
 				var buf = new Buffer(strData.length/2);
@@ -473,7 +553,7 @@ exports.newWall = function(wallType,wall) {
 				for(var a = 0; a < strData.length/2;a++){
 					buf[a] = parseInt(strData.substr(a*2,2),16);
 					if(isNaN(buf[a]))	{
-						return 'bad';
+						return callback('bad');
 					}
 				}
 				for(var connId in openConnections){
@@ -484,10 +564,10 @@ exports.newWall = function(wallType,wall) {
 					
 					}
 				}
-				return 'ok';
+				return callback('ok');
 
 			default:
-				return 'bad';
+				return callback('bad');
 		}
 	}
 
@@ -529,7 +609,9 @@ exports.newWall = function(wallType,wall) {
 				var dataToProcess = completeData.substr(0,pos);
 				completeData = completeData.substr(pos+nnl.length,completeData.length);
 
-				socket.write(processPacket(dataToProcess,connectionId)+nnl);
+				processPacket(dataToProcess,connectionId,function(retVal) {
+					socket.write(retVal+nnl);
+				},socket);
 			}
 			openConnections[connectionId].readBuffer=completeData;
 
