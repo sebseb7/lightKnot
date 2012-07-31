@@ -1,16 +1,17 @@
 #!/usr/local/bin/node
 
+process.on('uncaughtException', function (err) {
 
-	process.on('uncaughtException', function (err) {
+	console.log('uncaught exception: '+ err)
+	console.log(err.stack);
 
-		console.log('uncaught exception: '+ err)
-		console.log(err.stack);
-
-	});
+});
 
 var fs = require('fs');
 var wall = require('./wall.js');
 var wallConn = require('./wallConnection.js');
+
+
 {
 	var serialDevice = '/dev/cu.usbserial-AE018X8S';
 		
@@ -31,7 +32,8 @@ var wallConn = require('./wallConnection.js');
 	var ceilingLED = wall.newWall('CeilingLED',connectionCeil);
 }
 {
-	var serialDevice = '/dev/cu.usbserial-A100DDXG5';
+	//var serialDevice = '/dev/cu.usbserial-A100DDXG5';
+	var serialDevice = '/dev/cu.usbmodem411';
 		
 	var hardwareAvailable = true;
 
