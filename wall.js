@@ -52,7 +52,7 @@ exports.newWall = function(wallType,wall) {
 	}else if(wallType == 'PentawallHD') {
 
 		configuration = {
-			tcpPort            : 1350,
+			tcpPort            : 1340,
 			width              : 24,
 			height             : 24,
 			bpp                : 8,
@@ -66,7 +66,7 @@ exports.newWall = function(wallType,wall) {
 	}else if(wallType == 'CeilingLED') {
 
 		configuration = {
-			tcpPort            : 1351,
+			tcpPort            : 1341,
 			width              : 5,
 			height             : 1,
 			bpp                : 8,
@@ -90,6 +90,7 @@ exports.newWall = function(wallType,wall) {
 
 	var openConnections = {};
 	var displayBuffers = [];
+	var connectionsInPrio = [];
 	var ceilBuffers = [];
 
 	var pixelSize = configuration.bpp / 4;
@@ -112,7 +113,15 @@ exports.newWall = function(wallType,wall) {
 
 		var newPrio = 0;
 
+		for(var i =0;i<4;i++)
+		{
+			connectionsInPrio[i]=0;
+		}
+
 		for(var connId in openConnections){
+			
+			connectionsInPrio[openConnections[connId].priorityLevel]++;
+
 			if(openConnections[connId].priorityLevel > newPrio){
 				newPrio = openConnections[connId].priorityLevel;
 			}
@@ -204,7 +213,7 @@ exports.newWall = function(wallType,wall) {
 					if(myPrio >= currentPrio){
 
 						if(configuration.subpixel == 3){
-							wall.setAllPixel3(r,g,b),callback,socket;
+							wall.setAllPixel3(r,g,b,callback,socket);
 						}else{
 							wall.setAllPixel(g,callback,socket);
 						}
