@@ -18,7 +18,9 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		} catch(e) {
 			console.log('connection error',e);
 			ledWallConnection = null;
-			setTimeout(function() {exports.init(true,device,baudrate)},5000);
+			console.log('restart c');
+			process.exit(0);
+			//setTimeout(function() {exports.newConn(true,device,baudrate)},5000);
 			return;
 		}
 
@@ -33,7 +35,9 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 			
 			}
 			ledWallConnection = null;
-			setTimeout(function() {exports.init(true,device,baudrate)},5000);
+			console.log('restart d');
+			process.exit();
+			//setTimeout(function() {exports.newConn(true,device,baudrate)},5000);
 		});
 
 		ledWallConnection.realWrite = ledWallConnection.write;
@@ -175,7 +179,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 	var magic_42 = new Buffer([0x42]);
 	var magic_23 = new Buffer([0x23]);
 
-	wallConn.setAllPixel3 = function(r,g,callback,socket) {
+	wallConn.setAllPixel3 = function(r,g,b,callback,socket) {
 
 		var buf = new Buffer([0,0,r,g,b]);
 

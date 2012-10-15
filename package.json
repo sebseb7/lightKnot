@@ -6,7 +6,7 @@
   	    , "email": "seb@exse.net"
  	    , "web": "http://ddfpv.de/"
  	    }
-, "dependencies": { "buffertools": ">= 1.1.0" , "pentawalltools": ">= 0.0.3" , "socket.io": ">= 0.9.6", "serialport": ">= 0.7.3"}
+, "dependencies": { "buffertools": ">= 1.1.0" , "pentawalltools": ">= 0.0.5" , "socket.io": ">= 0.9.6", "serialport": ">= 0.7.3"}
 , "repositories": [{ "type": "git"
 		   , "path": "git://github.com/sebseb7/lightKnot.git"
 		   }]

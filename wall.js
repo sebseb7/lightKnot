@@ -7,6 +7,8 @@ require('pentawalltools');
 
 
 var nnl = '\r\n'; //network new line
+var currentRecFd;
+var currentRecStarted;
 
 
 exports.newWall = function(wallType,wall) {
@@ -15,12 +17,11 @@ exports.newWall = function(wallType,wall) {
 	var configuration;
 
 
-	var currentRecFd;
-	var currentRecStarted;
 	var lastFrame;
 	var lastCeilFrame;
 
-	
+	var homedir = process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+
 	if(wallType == 'g3d2') {
 
 		configuration = {
@@ -32,7 +33,7 @@ exports.newWall = function(wallType,wall) {
 			subpixelOrder      : 'g',
 			alphapixel		   : 'a',
 			name               : 'g3d2',
-			recordingPath      : '/Users/seb/Sites/wallRecords_g3d2/',
+			recordingPath      : homedir+'/Sites/wallRecords_g3d2/',
 		};
 
 	}else if(wallType == 'Pentawall') {
@@ -46,7 +47,7 @@ exports.newWall = function(wallType,wall) {
 			subpixelOrder      : 'rrggbb',
 			alphapixel		   : 'aa',
 			name               : 'Pentawall',
-			recordingPath      : '/opt/idleloop/rec',
+			recordingPath      : homedir+'/Sites/wallRecords_pw/',
 		};
 
 	}else if(wallType == 'PentawallHD') {
@@ -60,7 +61,7 @@ exports.newWall = function(wallType,wall) {
 			subpixelOrder      : 'rrggbb',
 			alphapixel		   : 'aa',
 			name               : 'PentawallHD',
-			recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
+			recordingPath      : homedir+'/Sites/wallRecords/',
 		};
 
 	}else if(wallType == 'CeilingLED') {
@@ -73,7 +74,7 @@ exports.newWall = function(wallType,wall) {
 			subpixel           : 4,
 			subpixelOrder      : 'rrggbbww',
 			name               : 'CeilingLED',
-			recordingPath      : '/Users/k-ot/Sites/wallRecords/rec',
+			recordingPath      : homedir+'/Sites/wallRecords/',
 		};
 
 	}
@@ -487,7 +488,10 @@ exports.newWall = function(wallType,wall) {
 				// start recodring
 
 
-				fs.open(configuration.recordingPath+Date.now()+'.rec','a',0666,function(err,fd) {
+				var filename = data.substr(2,data.length-2);
+				
+				fs.open(configuration.recordingPath+filename+'.rec','a',0666,function(err,fd) {
+				//fs.open(configuration.recordingPath+Date.now()+'.rec','a',0666,function(err,fd) {
 
 					console.log('start rec '+err);
 

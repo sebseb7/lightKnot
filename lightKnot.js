@@ -74,7 +74,7 @@ var wallConn = require('./wallConnection.js');
 
 
 {
-	var serialDevice = '/dev/cu.usbserial-A100DDXG';
+	var serialDevice = '/dev/cu.usbmodem411';
 		
 	var hardwareAvailable = true;
 
