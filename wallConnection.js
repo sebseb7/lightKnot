@@ -1,4 +1,4 @@
-var serialPort = require('serialport_sebseb7').SerialPort; //needs patch for 500000 baud
+var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
 
 
 
@@ -57,6 +57,12 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 				write_busy = 1;
 				
 				ledWallConnection.realWrite(buf.data, function(err,result) {
+					if(err)
+					{
+						console.log(err);
+						console.log('restart e');
+						process.exit();
+					}
 					write_busy = 0;
 					if(buf.sock && (conn_buffer.length < 10))
 					{
@@ -92,6 +98,12 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 				write_busy = 1;
 				
 				ledWallConnection.realWrite(buf, function(err,result) {
+					if(err)
+					{
+						console.log(err);
+						console.log('restart e');
+						process.exit();
+					}
 					write_busy = 0;
 					if(socket && (conn_buffer.length < 10))
 					{
