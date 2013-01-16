@@ -1,4 +1,4 @@
-var serialPort = require('serialport_sebseb7').SerialPort; //needs patch for 500000 baud
+var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
 
 
 
@@ -57,6 +57,12 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 				write_busy = 1;
 				
 				ledWallConnection.realWrite(buf.data, function(err,result) {
+					if(err)
+					{
+						console.log(err);
+						console.log('restart e');
+						process.exit();
+					}
 					write_busy = 0;
 					if(buf.sock && (conn_buffer.length < 10))
 					{
@@ -82,7 +88,6 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 				socket.pause();
 			}
 
-
 			if(write_busy == 1)
 			{
 				conn_buffer.push({data:buf,cb:callback,sock:socket});
@@ -92,6 +97,12 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 				write_busy = 1;
 				
 				ledWallConnection.realWrite(buf, function(err,result) {
+					if(err)
+					{
+						console.log(err);
+						console.log('restart e');
+						process.exit();
+					}
 					write_busy = 0;
 					if(socket && (conn_buffer.length < 10))
 					{
@@ -183,9 +194,12 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		var buf = new Buffer([0,0,r,g,b]);
 
+	
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42);
 			ledWallConnection.write(escapeData(buf),callback,socket);
+		}else{
+			callback('ok');
 		}
 
 	}
@@ -197,6 +211,8 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42);
 			ledWallConnection.write(escapeData(buf),callback,socket);
+		}else{
+			callback('ok');
 		}
 
 	}
@@ -207,6 +223,8 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
+		}else{
+			callback('ok');
 		}
 	}
 
@@ -216,6 +234,8 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
+		}else{
+			callback('ok');
 		}
 
 	}
@@ -226,6 +246,8 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
+		}else{
+			callback('ok');
 		}
 
 	}
@@ -235,6 +257,11 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_23.concat(escapeData(buf)),callback,socket);
+		}else{
+			if(callback)
+			{
+				callback('ok');
+			};
 		}
 
 	}
