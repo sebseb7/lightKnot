@@ -53,7 +53,7 @@ exports.newWall = function(wallType,wall) {
 	}else if(wallType == 'PentawallHD') {
 
 		configuration = {
-			tcpPort            : 1340,
+			tcpPort            : 1342,
 			width              : 24,
 			height             : 24,
 			bpp                : 8,
@@ -67,7 +67,7 @@ exports.newWall = function(wallType,wall) {
 	}else if(wallType == 'CeilingLED') {
 
 		configuration = {
-			tcpPort            : 1341,
+			tcpPort            : 1343,
 			width              : 5,
 			height             : 1,
 			bpp                : 8,
@@ -490,6 +490,11 @@ exports.newWall = function(wallType,wall) {
 
 				var filename = data.substr(2,data.length-2);
 				
+				if(filename == '')
+				{
+					return callback('bad');
+				}
+
 				fs.open(configuration.recordingPath+filename+'.rec','a',0666,function(err,fd) {
 				//fs.open(configuration.recordingPath+Date.now()+'.rec','a',0666,function(err,fd) {
 
