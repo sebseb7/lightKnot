@@ -36,6 +36,13 @@
 
 					//setting canvas size does not work this way
 
+					if(configuration.name == 'Pentawall')
+					{
+						canvasEl.style.marginLeft = '340px';
+						canvasEl.style.paddingTop = '160px';
+			//			canvasEl.style.width=configuration.width*4;
+			//			canvasEl.style.height=configuration.height*4;
+					}
 					if(configuration.name == 'g3d2')
 					{
 						canvasEl.style.marginLeft = '305px';
@@ -171,6 +178,7 @@
 
 		<div id="back" style="position:absolute;top:0px;left:0px;">
 			<canvas id="canvas1" width="300" height="300"  style="margin-left:250px;padding-top:260px"></canvas>
+			<br/>
 			<canvas id="canvasCeil" width="250" height="250"  style="margin-left:0px;padding-top:260px"></canvas>
 		</div>
 	</body>
