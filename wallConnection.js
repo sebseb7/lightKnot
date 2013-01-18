@@ -199,7 +199,10 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 			ledWallConnection.write(magic_42);
 			ledWallConnection.write(escapeData(buf),callback,socket);
 		}else{
-			callback('ok');
+			if(callback)
+			{
+				callback('ok');
+			}
 		}
 
 	}
@@ -212,7 +215,10 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 			ledWallConnection.write(magic_42);
 			ledWallConnection.write(escapeData(buf),callback,socket);
 		}else{
-			callback('ok');
+			if(callback)
+			{
+				callback('ok');
+			}
 		}
 
 	}
@@ -224,7 +230,10 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
 		}else{
-			callback('ok');
+			if(callback)
+			{
+				callback('ok');
+			}
 		}
 	}
 
@@ -235,7 +244,10 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
 		}else{
-			callback('ok');
+			if(callback)
+			{
+				callback('ok');
+			}
 		}
 
 	}
@@ -247,7 +259,10 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
 		}else{
-			callback('ok');
+			if(callback)
+			{
+				callback('ok');
+			}
 		}
 
 	}
