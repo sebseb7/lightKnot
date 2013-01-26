@@ -650,7 +650,7 @@ exports.newWall = function(wallType,wall) {
 			
 			setTimeout(function () {
 				server.close();
-				conviguration.server.listen(configuration.tcpPort, '::');
+				configuration.server.listen(configuration.tcpPort, '::');
 			}, 1000);
 		}
 	});
