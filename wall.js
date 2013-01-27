@@ -75,7 +75,22 @@ exports.newWall = function(wallType,wall) {
 			subpixelOrder      : 'rrggbbww',
 			name               : 'CeilingLED',
 			recordingPath      : homedir+'/Sites/wallRecords/',
+			baseAddress        : 0xF0,
 		};
+	}else if(wallType == 'Ledbar') {
+
+		configuration = {
+			tcpPort            : 1344,
+			width              : 5,
+			height             : 1,
+			bpp                : 8,
+			subpixel           : 4,
+			subpixelOrder      : 'rrggbbwwuu',
+			name               : 'PentaFnord Ledbar',
+			recordingPath      : homedir+'/Sites/wallRecords/',
+			baseAddress        : 0xF0,
+		};
+
 
 	}
 
@@ -100,11 +115,11 @@ exports.newWall = function(wallType,wall) {
 
 	var currentPrio = 0;
 
-	for(var i = 0;i < 4; i++)
+	for(var priolevel = 0;priolevel < 4; priolevel++)
 	{
-		displayBuffers[i] = new Buffer(configuration.width*configuration.height*configuration.subpixel*(configuration.bpp / 8));
-		displayBuffers[i].fill(0);
-		ceilBuffers[i] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		displayBuffers[priolevel] = new Buffer(configuration.width*configuration.height*configuration.subpixel*(configuration.bpp / 8));
+		displayBuffers[priolevel].fill(0);
+		ceilBuffers[priolevel] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
 	}
 
 
@@ -131,6 +146,7 @@ exports.newWall = function(wallType,wall) {
 		if(currentPrio != newPrio)
 		{
 			currentPrio = newPrio;
+			// prio has changed, lets apply the colorsettings that was stored with that prio
 			if(configuration.height == 1)
 			{
 				wall.setCeiling(0xf1,ceilBuffers[currentPrio][0],ceilBuffers[currentPrio][1],ceilBuffers[currentPrio][2],ceilBuffers[currentPrio][3]);
@@ -234,9 +250,9 @@ exports.newWall = function(wallType,wall) {
 							fs.writeSync(currentRecFd,"\r\n",null);
 						}
 						return;
-					}else{
+					}else{ 
 						return callback('ok');
-					}
+					} 
 				
 
 
@@ -249,6 +265,10 @@ exports.newWall = function(wallType,wall) {
 					lastFrame = null;
 
 				}else if ((configuration.height != 1)&&(x < configuration.width)&&(y < configuration.height)){
+
+					//
+					// ######### its a pixel in a wall #################################
+					//
 		
 					if(configuration.subpixel == 3){
 						displayBuffers[myPrio][(y*configuration.width+x)*3] = r;
@@ -754,6 +774,7 @@ exports.newWall = function(wallType,wall) {
 		}
 
 	};
+
 	var pushCeil = function() {
 
 		if( 
@@ -781,7 +802,7 @@ exports.newWall = function(wallType,wall) {
 
 	setInterval(pushFrames,60);
 //	if(configuration.height==1){
-//		setInterval(pushCeil,10);
+	setInterval(pushCeil,60);
 //	}
 
 

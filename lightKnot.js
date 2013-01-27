@@ -71,6 +71,7 @@ var wallConn = require('./wallConnection.js');
 
 	var pentawallHD = wall.newWall('PentawallHD',connectionCeil);
 	var ceilingLED = wall.newWall('CeilingLED',connectionCeil);
+	var ceilingLED = wall.newWall('Ledbar',connectionCeil);
 }
 
 
