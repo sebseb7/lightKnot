@@ -708,11 +708,11 @@ exports.newWall = function(wallType,wall) {
 			filename = req.url;
 		}
 
-		fs.readFile(__dirname + filename,
+		fs.readFile(__dirname + '/webgui' + filename,
 		function (err, data) {
 			if (err) {
 				res.writeHead(500);
-				return res.end('Error loading index.html');
+				return res.end('Error loading /webgui' + filename);
 			}
 
 			res.writeHead(200);
