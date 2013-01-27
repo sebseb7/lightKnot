@@ -81,14 +81,14 @@ exports.newWall = function(wallType,wall) {
 
 		configuration = {
 			tcpPort            : 1344,
-			width              : 5,
+			width              : 7,
 			height             : 1,
 			bpp                : 8,
 			subpixel           : 4,
-			subpixelOrder      : 'rrggbbwwuu',
+			subpixelOrder      : 'rrggbbww',
 			name               : 'PentaFnord Ledbar',
 			recordingPath      : homedir+'/Sites/wallRecords/',
-			baseAddress        : 0xF0,
+			baseAddress        : 0xD0,
 		};
 
 
@@ -115,11 +115,13 @@ exports.newWall = function(wallType,wall) {
 
 	var currentPrio = 0;
 
-	for(var priolevel = 0;priolevel < 4; priolevel++)
+	for(var priolevel = 0;priolevel <= 4; priolevel++) //yes, we have 5 prio levels
 	{
 		displayBuffers[priolevel] = new Buffer(configuration.width*configuration.height*configuration.subpixel*(configuration.bpp / 8));
 		displayBuffers[priolevel].fill(0);
-		ceilBuffers[priolevel] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		//ceilBuffers[priolevel] = new Buffer([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]);
+		ceilBuffers[priolevel] = new Buffer(configuration.width*configuration.subpixel);
+		ceilBuffers[priolevel].fill(0);
 	}
 
 
@@ -147,13 +149,21 @@ exports.newWall = function(wallType,wall) {
 		{
 			currentPrio = newPrio;
 			// prio has changed, lets apply the colorsettings that was stored with that prio
-			if(configuration.height == 1)
-			{
-				wall.setCeiling(0xf1,ceilBuffers[currentPrio][0],ceilBuffers[currentPrio][1],ceilBuffers[currentPrio][2],ceilBuffers[currentPrio][3]);
+			if(configuration.height == 1) {
+
+				for (var i=0;i<configuration.width;i++) {
+					wall.setCeiling(configuration.baseAddress+i+1,
+							ceilBuffers[currentPrio][0+i*4],
+							ceilBuffers[currentPrio][1+i*4],
+							ceilBuffers[currentPrio][2+i*4],
+							ceilBuffers[currentPrio][3+i*4]);
+				}
+
+/*				wall.setCeiling(0xf1,ceilBuffers[currentPrio][0],ceilBuffers[currentPrio][1],ceilBuffers[currentPrio][2],ceilBuffers[currentPrio][3]);
 				wall.setCeiling(0xf2,ceilBuffers[currentPrio][4],ceilBuffers[currentPrio][5],ceilBuffers[currentPrio][6],ceilBuffers[currentPrio][7]);
 				wall.setCeiling(0xf3,ceilBuffers[currentPrio][8],ceilBuffers[currentPrio][9],ceilBuffers[currentPrio][10],ceilBuffers[currentPrio][11]);
 				wall.setCeiling(0xf4,ceilBuffers[currentPrio][12],ceilBuffers[currentPrio][13],ceilBuffers[currentPrio][14],ceilBuffers[currentPrio][15]);
-				wall.setCeiling(0xf5,ceilBuffers[currentPrio][16],ceilBuffers[currentPrio][17],ceilBuffers[currentPrio][18],ceilBuffers[currentPrio][19]);
+				wall.setCeiling(0xf5,ceilBuffers[currentPrio][16],ceilBuffers[currentPrio][17],ceilBuffers[currentPrio][18],ceilBuffers[currentPrio][19]);*/
 			}
 			else
 			{
@@ -183,13 +193,16 @@ exports.newWall = function(wallType,wall) {
 				'04ll set priority level 00..04 , currentLevel: '+myPrio+nnl);
 
 			case 1:
-				return  callback('width='+configuration.width+nnl+
+				var infotext=   'width='+configuration.width+nnl+
 						'height='+configuration.height+nnl+
 						'subpixel='+configuration.subpixel+nnl+
 						'bpp='+configuration.bpp+nnl+
 						'name='+configuration.name+nnl+
 						'subpixelOrder='+configuration.subpixelOrder+nnl+
-						'hardwareAvailable='+configuration.hardware+nnl);
+						'hardwareAvailable='+configuration.hardware+nnl;
+				if ((wallType=='CeilingLED')||(wallType='Ledbar')) 
+					 infotext += 'baseAddress=0x'+configuration.baseAddress.toString(16)+nnl;
+				return  callback(infotext);
 			case 2:
 			
 				var x = parseInt(data.substr(2,2),16);
@@ -226,16 +239,16 @@ exports.newWall = function(wallType,wall) {
 						{
 							displayBuffers[myPrio][a] = g*0x10+g;
 						};
-					}	
-					if(myPrio >= currentPrio){
-
+					} // end if (configuration.subpixel == 3)
+	
+					if(myPrio >= currentPrio){ // i am priorized to write stuff to the wall
 						if(configuration.subpixel == 3){
 							wall.setAllPixel3(r,g,b,callback,socket);
 						}else{
 							wall.setAllPixel(g,callback,socket);
 						}
 						
-						if(currentRecFd){
+						if(currentRecFd){ //redording is on, write stuff to file
 							
 							var buf = new Buffer([x,y,r,g,b]);
 							var strBuf = new Buffer(buf.toString('hex'));
@@ -248,7 +261,7 @@ exports.newWall = function(wallType,wall) {
 							
 							fs.writeSync(currentRecFd,strBuf,0,strBuf.length,null);
 							fs.writeSync(currentRecFd,"\r\n",null);
-						}
+						} 
 						return;
 					}else{ 
 						return callback('ok');
@@ -265,9 +278,8 @@ exports.newWall = function(wallType,wall) {
 					lastFrame = null;
 
 				}else if ((configuration.height != 1)&&(x < configuration.width)&&(y < configuration.height)){
-
 					//
-					// ######### its a pixel in a wall #################################
+					// ######### what we have here is a pixel for a wall #############################
 					//
 		
 					if(configuration.subpixel == 3){
@@ -319,20 +331,43 @@ exports.newWall = function(wallType,wall) {
 					
 
 				
-				}else if ((x <= 0xf5)&&(x >= 0xf0)&&(configuration.height==1)){
+				}else if ((configuration.height==1) && (x <= (configuration.baseAddress+configuration.width)) && (x >= configuration.baseAddress) ){
+					//
+					// ########## this one is for a LED strip (CeilingLEDs) ########## 
+					//
+						
 
 
-					if(x == 0xf0){
-						ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
+					// at first we write stuff to the buffers
+					// (for recording and restoring after Prio changes					
+			
+					if(x == configuration.baseAddress){ // this is for all leds (0xD0 or 0xF0)
+						
+						//ceilBuffers[myPrio] = new Buffer(configuration.width*4);
+						for (var i=0;i<configuration.width;i++){
+							ceilBuffers[myPrio][i*4+0] = y;  //red  yes, red, indeed ;-)
+							ceilBuffers[myPrio][i*4+1] = r;  //green
+							ceilBuffers[myPrio][i*4+2] = g;  //blue
+							ceilBuffers[myPrio][i*4+3] = b;  //white
+						}
+							
+						//ceilBuffers[myPrio] = new Buffer([y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b,y,r,g,b]);
 					}else{
-						ceilBuffers[myPrio][(x-0xf1)*4] = y;
-						ceilBuffers[myPrio][(x-0xf1)*4+1] = r;
-						ceilBuffers[myPrio][(x-0xf1)*4+2] = g;
-						ceilBuffers[myPrio][(x-0xf1)*4+3] = b;
+						//
+						// ########### This is for one specific led ###########################
+						//
+						ceilBuffers[myPrio][(x-configuration.baseAddress-1)*4] = y; //red
+						ceilBuffers[myPrio][(x-configuration.baseAddress-1)*4+1] = r; //green
+						ceilBuffers[myPrio][(x-configuration.baseAddress-1)*4+2] = g; //blue
+						ceilBuffers[myPrio][(x-configuration.baseAddress-1)*4+3] = b; //white
 					}
 					
 					lastCeilFrame = null;
-		
+
+
+					// if we have control of the wall we write the comman to the bus
+					// for this we dont need to make a distinction wheter the command
+					// is for all pixels or for a single pixel
 					if(myPrio >= currentPrio){
 						wall.setCeiling(x,y,r,g,b,callback,socket);
 						if(currentRecFd){
