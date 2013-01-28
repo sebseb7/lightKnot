@@ -6,6 +6,9 @@
 
 		<script>
 
+			function setBackgroundImage(configuration) {
+				document.getElementById('bdy').style.backgroundImage = "url('background_"+configuration.name+".jpg')";
+			}
 
 			function onLoad(){
 
@@ -31,18 +34,52 @@
 
 				socket.on('init', function(configuration) {
 
-					document.getElementById('message1').innerHTML = 'connected to :'+configuration.name;
-					document.getElementById('bdy').style.backgroundImage = "url('background_"+configuration.name+".jpg')";
+					document.getElementById('message1').innerHTML = 'connected to: '+configuration.name;
+					
 
 					//setting canvas size does not work this way
 
-					if(configuration.name == 'Pentawall')
+
+					switch (configuration.name) {
+					  case 'Pentawall':
+						canvasEl.style.marginLeft = '340px';
+						canvasEl.style.paddingTop = '160px';
+			//			canvasEl.style.width=configuration.width*4;
+			//			canvasEl.style.height=configuration.height*4;
+						setBackgroundImage(configuration);	
+					    break;
+					  case 'g3d2':
+					    canvasEl.style.marginLeft = '305px';
+						canvasEl.style.paddingTop = '280px';
+			//			canvasEl.style.width=configuration.width*4;
+			//			canvasEl.style.height=configuration.height*4;
+						setBackgroundImage(configuration);
+					    break;
+					  case 'PentawallHD':
+			//			canvasEl.width=configuration.width*8;
+			//			canvasEl.height=configuration.height*8;
+						setBackgroundImage(configuration);
+					    break;
+					  case 'CeilingLED':
+			//			canvasEl.width=configuration.width*8;
+						canvasEl.style.marginLeft = '0px';
+						canvasEl.style.paddingTop = '0px';
+						canvasEl.height= '0px';
+					    break;
+					  default:
+					    alert("unknown wall type\n(This is an error message,\nnot an error explanation.)");
+					    break;
+					}
+
+
+
+	/*				if(configuration.name == 'Pentawall')
 					{
 						canvasEl.style.marginLeft = '340px';
 						canvasEl.style.paddingTop = '160px';
 			//			canvasEl.style.width=configuration.width*4;
 			//			canvasEl.style.height=configuration.height*4;
-					}
+					/*}
 					if(configuration.name == 'g3d2')
 					{
 						canvasEl.style.marginLeft = '305px';
@@ -54,7 +91,7 @@
 					{
 			//			canvasEl.width=configuration.width*8;
 			//			canvasEl.height=configuration.height*8;
-					}
+					}*/
 
 					socket.on('frame', function (data) {
 
@@ -122,19 +159,32 @@
 
 						if(configuration.name == 'CeilingLED') {
 							var i = 0;
-							for(i = 0; i < 4; i++)
+							for(i = 0; i < 5; i++)
 							{
 								var r = data.buf.charCodeAt(i*4);
 								var g = data.buf.charCodeAt(i*4+1);
 								var b = data.buf.charCodeAt(i*4+2);
 								var w = data.buf.charCodeAt(i*4+3);
 
-								canvasCeil.fillStyle = "rgb("+r+","+g+","+b+")";
-								canvasCeil.fillRect( i*35,0, 30, 30 );
+								if (i!=4) {
+									canvasCeil.fillStyle = "rgb("+r+","+g+","+b+")";
+									canvasCeil.fillRect( i*35,0, 30, 30 );
 
-								canvasCeil.fillStyle = "rgb("+w+","+w+","+w+")";
-								canvasCeil.fillRect( i*35,40, 30, 30 );
+									canvasCeil.fillStyle = "rgb("+w+","+w+","+w+")";
+									canvasCeil.fillRect( i*35,40, 30, 30 );
+								} else {
+									canvasCeil.fillStyle =  "rgb("+r+",0,0)"
+									canvasCeil.fillRect( i*35,0, 6, 70 );							
+									canvasCeil.fillStyle = "rgb(0,"+g+",0)";
+									canvasCeil.fillRect( i*35+8,0, 6, 70 );							
+									canvasCeil.fillStyle = "rgb(0,0,"+b+")";
+									canvasCeil.fillRect( i*35+16,0, 6, 70 );							
+									canvasCeil.fillStyle = "rgb("+w+","+w+","+w+")";
+									canvasCeil.fillRect( i*35+24,0, 6, 70 );							
+
+								}
 							}
+
 						} // end if(configuration.name == 'CeilingLED')
 
 
@@ -169,7 +219,7 @@
 
 	</head>
 
-	<body style="background-color:blue;background-repeat:no-repeat;" onload="onLoad()" id="bdy">
+	<body style="background-color:#404090;background-repeat:no-repeat;" onload="onLoad()" id="bdy">
 	
 		<div id="message1"></div>
 		<div id="message2"></div>
@@ -179,7 +229,7 @@
 		<div id="back" style="position:absolute;top:0px;left:0px;">
 			<canvas id="canvas1" width="300" height="300"  style="margin-left:250px;padding-top:260px"></canvas>
 			<br/>
-			<canvas id="canvasCeil" width="250" height="250"  style="margin-left:0px;padding-top:260px"></canvas>
+			<canvas id="canvasCeil" width="250" height="400"  style="margin-left:10px;padding-top:100px"></canvas>
 		</div>
 	</body>
 </html>
