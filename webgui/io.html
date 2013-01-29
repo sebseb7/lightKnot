@@ -66,6 +66,12 @@
 						canvasEl.style.paddingTop = '0px';
 						canvasEl.height= '0px';
 					    break;
+					  case 'Ledbar':
+			//			canvasEl.width=configuration.width*8;
+						canvasEl.style.marginLeft = '0px';
+						canvasEl.style.paddingTop = '0px';
+						canvasEl.height= '0px';
+					    break;
 					  default:
 					    alert("unknown wall type\n(This is an error message,\nnot an error explanation.)");
 					    break;
@@ -157,22 +163,18 @@
 
 
 
-						if(configuration.name == 'CeilingLED') {
+						if(configuration.name == 'CeilingLED' || configuration.name == 'Ledbar') {
 							var i = 0;
-							for(i = 0; i < 5; i++)
+							for(i = 0; i < configuration.width; i++)
 							{
 								var r = data.buf.charCodeAt(i*4);
 								var g = data.buf.charCodeAt(i*4+1);
 								var b = data.buf.charCodeAt(i*4+2);
 								var w = data.buf.charCodeAt(i*4+3);
 
-								if (i!=4) {
-									canvasCeil.fillStyle = "rgb("+r+","+g+","+b+")";
-									canvasCeil.fillRect( i*35,0, 30, 30 );
+								if (configuration.name == 'CeilingLED'  && i==4) {
+									// stripes for led stripes
 
-									canvasCeil.fillStyle = "rgb("+w+","+w+","+w+")";
-									canvasCeil.fillRect( i*35,40, 30, 30 );
-								} else {
 									canvasCeil.fillStyle =  "rgb("+r+",0,0)"
 									canvasCeil.fillRect( i*35,0, 6, 70 );							
 									canvasCeil.fillStyle = "rgb(0,"+g+",0)";
@@ -180,8 +182,12 @@
 									canvasCeil.fillStyle = "rgb(0,0,"+b+")";
 									canvasCeil.fillRect( i*35+16,0, 6, 70 );							
 									canvasCeil.fillStyle = "rgb("+w+","+w+","+w+")";
-									canvasCeil.fillRect( i*35+24,0, 6, 70 );							
-
+									canvasCeil.fillRect( i*35+24,0, 6, 70 );
+								} else {
+									canvasCeil.fillStyle = "rgb("+r+","+g+","+b+")";
+									canvasCeil.fillRect( i*35,0, 30, 30 );
+									canvasCeil.fillStyle = "rgb("+w+","+w+","+w+")";
+									canvasCeil.fillRect( i*35,40, 30, 30 );							
 								}
 							}
 

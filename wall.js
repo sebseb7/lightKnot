@@ -86,7 +86,7 @@ exports.newWall = function(wallType,wall) {
 			bpp                : 8,
 			subpixel           : 4,
 			subpixelOrder      : 'rrggbbww',
-			name               : 'PentaFnord Ledbar',
+			name               : 'Ledbar',
 			recordingPath      : homedir+'/Sites/wallRecords/',
 			baseAddress        : 0xD0,
 		};
