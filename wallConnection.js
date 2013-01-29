@@ -255,7 +255,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 	wallConn.setCeiling = function(x,r,g,b,w,callback,socket) {
 
 		var buf = new Buffer([x,r,g,b,w]);
-
+		console.log(x.toString(16)+' '+r.toString(16)+' '+g.toString(16)+' '+b.toString(16)+' '+w.toString(16));
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
 		}else{
