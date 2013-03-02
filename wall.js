@@ -199,18 +199,21 @@ exports.newWall = function(wallType,wall) {
 				if((x == 255)&&(y==255)){
 					
 					if(configuration.subpixel == 3){
-						var onePixel = new Buffer([r,g,b]);
-						var a;
-						for(a = 0 ; a < configuration.width*configuration.height; a++)
+						for(var j = 0;j < (configuration.width*configuration.height);j++)
 						{
-							onePixel.copy(displayBuffers[myPrio],a*3);
-						};
+							displayBuffers[myPrio][j*3] = r;
+							displayBuffers[myPrio][j*3+1] = g;
+							displayBuffers[myPrio][j*3+2] = b;
+						}
 					}else{
 						for(a = 0 ; a < configuration.width*configuration.height/2; a++)
 						{
 							displayBuffers[myPrio][a] = g*0x10+g;
 						};
 					}	
+					
+					lastFrame = null;
+					
 					if(myPrio >= currentPrio){
 
 						if(configuration.subpixel == 3){
@@ -240,13 +243,6 @@ exports.newWall = function(wallType,wall) {
 				
 
 
-					for(var j = 0;j < (configuration.width*configuration.height);j++)
-					{
-						displayBuffers[myPrio][configuration.width*configuration.height*3] = r;
-						displayBuffers[myPrio][configuration.width*configuration.height*3+1] = g;
-						displayBuffers[myPrio][configuration.width*configuration.height*3+2] = b;
-					}
-					lastFrame = null;
 
 				}else if ((configuration.height != 1)&&(x < configuration.width)&&(y < configuration.height)){
 		
