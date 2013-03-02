@@ -53,7 +53,7 @@ exports.newWall = function(wallType,wall) {
 	}else if(wallType == 'PentawallHD') {
 
 		configuration = {
-			tcpPort            : 1342,
+			tcpPort            : 1350,
 			width              : 24,
 			height             : 24,
 			bpp                : 8,
@@ -228,20 +228,29 @@ exports.newWall = function(wallType,wall) {
 				if((x == 255)&&(y==255)){
 					
 					if(configuration.subpixel == 3){
-						var onePixel = new Buffer([r,g,b]);
-						var a;
-						for(a = 0 ; a < configuration.width*configuration.height; a++)
+						//var onePixel = new Buffer([r,g,b]);
+						//var a;
+						//for(a = 0 ; a < configuration.width*configuration.height; a++)
+						//{
+						//	onePixel.copy(displayBuffers[myPrio],a*3);
+						//};
+						for(var j = 0;j < (configuration.width*configuration.height);j++)
 						{
-							onePixel.copy(displayBuffers[myPrio],a*3);
-						};
+							displayBuffers[myPrio][configuration.width*configuration.height*3] = r;
+							displayBuffers[myPrio][configuration.width*configuration.height*3+1] = g;
+							displayBuffers[myPrio][configuration.width*configuration.height*3+2] = b;
+						}
 					}else{
 						for(a = 0 ; a < configuration.width*configuration.height/2; a++)
 						{
 							displayBuffers[myPrio][a] = g*0x10+g;
 						};
 					} // end if (configuration.subpixel == 3)
-	
+					
+					lastFrame = null;
+					
 					if(myPrio >= currentPrio){ // i am priorized to write stuff to the wall
+
 						if(configuration.subpixel == 3){
 							wall.setAllPixel3(r,g,b,callback,socket);
 						}else{
@@ -269,13 +278,6 @@ exports.newWall = function(wallType,wall) {
 				
 
 
-					for(var j = 0;j < (configuration.width*configuration.height);j++)
-					{
-						displayBuffers[myPrio][configuration.width*configuration.height*3] = r;
-						displayBuffers[myPrio][configuration.width*configuration.height*3+1] = g;
-						displayBuffers[myPrio][configuration.width*configuration.height*3+2] = b;
-					}
-					lastFrame = null;
 
 				}else if ((configuration.height != 1)&&(x < configuration.width)&&(y < configuration.height)){
 					//
