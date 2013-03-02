@@ -1,4 +1,4 @@
-var serialPort = require('serialport_sebseb7').SerialPort; //needs patch for 500000 baud
+var serialPort = require('serialport').SerialPort; //needs patch for 500000 baud
 
 
 
@@ -198,9 +198,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42);
 			ledWallConnection.write(escapeData(buf),callback,socket);
-		}
-		else
-		{
+		}else{
 			if(callback)
 			{
 				callback('ok');
@@ -216,9 +214,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42);
 			ledWallConnection.write(escapeData(buf),callback,socket);
-		}
-		else
-		{
+		}else{
 			if(callback)
 			{
 				callback('ok');
@@ -233,9 +229,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
-		}
-		else
-		{
+		}else{
 			if(callback)
 			{
 				callback('ok');
@@ -249,9 +243,7 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
-		}
-		else
-		{
+		}else{
 			if(callback)
 			{
 				callback('ok');
@@ -263,12 +255,10 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 	wallConn.setCeiling = function(x,r,g,b,w,callback,socket) {
 
 		var buf = new Buffer([x,r,g,b,w]);
-		console.log(x.toString(16)+' '+r.toString(16)+' '+g.toString(16)+' '+b.toString(16)+' '+w.toString(16));
+
 		if(ledWallConnection){
 			ledWallConnection.write(magic_42.concat(escapeData(buf)),callback,socket);
-		}
-		else
-		{
+		}else{
 			if(callback)
 			{
 				callback('ok');
@@ -282,13 +272,11 @@ exports.newConn = function(realHardwareAvailable,device,baudrate) {
 
 		if(ledWallConnection){
 			ledWallConnection.write(magic_23.concat(escapeData(buf)),callback,socket);
-		}
-		else
-		{
+		}else{
 			if(callback)
 			{
 				callback('ok');
-			}
+			};
 		}
 
 	}
