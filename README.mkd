@@ -36,3 +36,6 @@ also prodvides a preview website, like this one : http://bender.hq.c3d2.de:2340 
 - 0a sent message to channel
 
 
+[![endorse](http://api.coderwall.com/sebseb7/endorsecount.png)](http://coderwall.com/sebseb7)
+
+
